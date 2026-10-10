@@ -8,12 +8,19 @@
 	"main": "worker/index.ts",
 	"compatibility_date": "2026-10-06",
 	"assets": {
-		"not_found_handling": "single-page-application"
+		"not_found_handling": "single-page-application", "run_worker_first": ["/api/*"]
 	},
 	"observability": {
 		"enabled": true
 	},
-	"upload_source_maps": true
+	"upload_source_maps": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "mynotes-db",
+			"database_id": "ddd08878-9530-448d-8dea-d7a538024875"
+		}
+	]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
