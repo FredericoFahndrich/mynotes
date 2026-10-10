@@ -31,6 +31,7 @@ Não há alteração de esquema nesta continuação. Não executar limpeza, recr
 - Editor de texto, listas e marcadores de tarefa, busca na seção atual e download do texto.
 - Salvar por botão, Ctrl/Command+S, mudança de página/caderno/seção e saída da conta. Erros impedem a navegação e mantêm o rascunho. Fechar/recarregar com alterações pendentes pede confirmação do navegador.
 - Controle de versão por updated_at: gravações concorrentes recebem 409 e o editor permite comparar com a versão salva ou baixar o rascunho.
+- Clicar na página já selecionada salva sem reabrir o conteúdo antigo. A lixeira pode ser aberta sem salvar ou perder alterações pendentes. Se a página estiver indisponível após exclusão em outra janela, o editor permite restaurar pela lixeira e tentar salvar novamente, baixar o rascunho ou descartá-lo com confirmação para recarregar. Restaurar não ignora conflitos de versão.
 - Quatro colunas, painéis translúcidos, temas claro/escuro. Em telas estreitas, rolagem horizontal conserva acesso a todas as colunas.
 - Não há páginas demonstrativas. Formatos de conteúdo desconhecidos são somente leitura para evitar perda na conversão.
 
@@ -43,6 +44,8 @@ A validação JWT não consulta revogação administrativa em tempo real; tokens
 Os testes usam Miniflare/D1 isolado em memória e duas identidades fictícias com tokens assinados por uma chave efêmera de teste. A chave é injetada apenas no handler de teste; o Worker publicado sempre usa Google JWKS. Cobrem acesso sem token, tokens inválidos, isolamento entre duas contas, ataques com IDs de outra conta, CRUD, restauração, concorrência, SQL parametrizado e limites de entrada. Não usam dados de produção nem criam contas Firebase reais.
 
 A sessão real Firebase já autenticada foi usada para testar criação, edição e persistência após recarga no Codespace. A prova com DUAS contas reais no projeto Firebase continua pendente; os testes automatizados usam identidades de teste, não são prova desse fluxo externo.
+
+`npm test` executa os 7 testes da API e 4 testes de interface com React, Vitest e jsdom. Os testes do editor cobrem o clique na página selecionada, recuperação pela lixeira após exclusão concorrente, preservação do rascunho após falha de rede e confirmação antes do descarte. As respostas da API e a sessão são simuladas nesses testes de interface.
 
 Referências: https://firebase.google.com/docs/auth/admin/verify-id-tokens e https://developers.cloudflare.com/d1/worker-api/d1-database/.
 

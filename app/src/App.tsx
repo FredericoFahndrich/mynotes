@@ -43,6 +43,7 @@ export default function App() {
   const [actionError, setActionError] = useState("");
   const [trash, setTrash] = useState<TrashItem[] | null>(null);
   const [conflict, setConflict] = useState<Page | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null); const dialogRef = useRef<HTMLElement>(null);
   const lock = useRef(false);
   const dialogOpen = Boolean(action || trash);
@@ -65,7 +66,7 @@ export default function App() {
     dialog.addEventListener("keydown", trap); return () => { dialog.removeEventListener("keydown", trap); previous?.focus(); };
   }, [dialogOpen]);
   function openPage(next: Page | null) {
-    setPage(next); setDraft({ title: next?.title ?? "", text: next ? readText(next.content_json).text : "" }); setConflict(null);
+    setPage(next); setDraft({ title: next?.title ?? "", text: next ? readText(next.content_json).text : "" }); setConflict(null); setUnavailable(false);
   }
   function chooseNotebook(id: string | null) {
     setNotebookId(id); setSections([]); setSectionId(null); setPages([]); openPage(null);
@@ -127,7 +128,9 @@ export default function App() {
       openPage(result.page); setNotice("Todas as alterações foram salvas."); return true;
     } catch (caught) {
       setError(message(caught));
+      if (caught instanceof ApiError && caught.status === 404) { setUnavailable(true); setConflict(null); }
       if (caught instanceof ApiError && caught.status === 409) {
+        setUnavailable(false);
         try { const current = await api<{ page: Page }>("/api/pages/" + page.id); setConflict(current.page); } catch { /* Keep the local draft intact. */ }
       }
       return false;
@@ -136,6 +139,14 @@ export default function App() {
   async function move(change: () => void) {
     if (lock.current) return;
     if (await save()) { setError(""); setNotice(""); change(); }
+  }
+  function reloadHierarchy() {
+    chooseNotebook(null); setLoading(previous => ({ ...previous, notebooks: true }));
+    setError(""); setNotice(""); setRetry(previous => previous + 1);
+  }
+  function discardUnavailableDraft() {
+    if (lock.current || !window.confirm("Descartar as alterações não salvas e recarregar? Baixe seu rascunho antes de continuar se quiser preservá-lo.")) return;
+    reloadHierarchy();
   }
   useEffect(() => {
     const handler = (event: KeyboardEvent) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") { event.preventDefault(); void save(); } };
@@ -173,10 +184,10 @@ export default function App() {
     finally { lock.current = false; setBusy(false); }
   }
   async function loadTrash() {
-    if (!(await save())) return;
-    setBusy(true);
+    // Opening the trash does not navigate away from the editor or discard its draft.
+    if (lock.current) return; lock.current = true; setBusy(true);
     try { const data = await api<{ items: TrashItem[] }>("/api/trash"); setTrash(data.items); setError(""); } catch (caught) { setError(message(caught)); }
-    finally { setBusy(false); }
+    finally { lock.current = false; setBusy(false); }
   }
   async function restore(item: TrashItem) {
     if (lock.current) return; lock.current = true; setBusy(true);
@@ -208,7 +219,7 @@ export default function App() {
     return <aside className={"panel " + kind + "-panel"} aria-label={heading}>
       <div className="panel-title"><h3>{heading}</h3><button disabled={disabled || !canCreate} onClick={() => ask(kind, "create")} aria-label={"Criar " + labels[kind]}>+</button></div>
       {loading[kind] ? <p className="empty-state" role="status">Carregando...</p> : items.length === 0 ? <p className="empty-state">{canCreate ? "Crie seu primeiro item com +." : "Selecione o item da coluna anterior."}</p> : items.map(item => <div className="item-row" key={item.id}>
-        <button className={(kind === "pages" ? "page-item" : "nav-item") + (selected === item.id ? " selected" : "")} disabled={busy} aria-pressed={selected === item.id} onClick={() => void move(() => kind === "notebooks" ? (item.id !== notebookId && chooseNotebook(item.id)) : kind === "sections" ? (item.id !== sectionId && chooseSection(item.id)) : openPage(item as Page))}>
+        <button className={(kind === "pages" ? "page-item" : "nav-item") + (selected === item.id ? " selected" : "")} disabled={busy} aria-pressed={selected === item.id} onClick={() => void move(() => kind === "notebooks" ? (item.id !== notebookId && chooseNotebook(item.id)) : kind === "sections" ? (item.id !== sectionId && chooseSection(item.id)) : (item.id !== page?.id && openPage(item as Page)))}>
           <span className={kind === "notebooks" ? "nav-dot" : kind === "sections" ? "section-indicator" : "page-icon"}>{kind === "pages" ? "▤" : ""}</span><span className="item-name">{item.title}</span>
         </button><div className="item-actions"><button disabled={disabled} aria-label={"Renomear " + labels[kind] + " " + item.title} onClick={() => ask(kind, "rename", item)}>✎</button><button disabled={disabled} aria-label={"Excluir " + labels[kind] + " " + item.title} onClick={() => ask(kind, "delete", item)}>×</button></div>
       </div>)}
@@ -221,13 +232,14 @@ export default function App() {
         <button className="quiet-button" disabled={disabled} onClick={() => void loadTrash()}>Lixeira</button><span className="account-status">{auth.currentUser?.email}</span>
         <button className="logout-button" disabled={busy} onClick={() => void move(() => { void signOut(auth).catch(caught => setError(message(caught))); })}>Sair</button></div>
     </header>
-    {(error || notice) && <div className={"status-banner " + (error ? "error" : "")}><span role={error ? "alert" : "status"}>{error || notice}</span>{error && <button disabled={disabled || dirty} onClick={() => { chooseNotebook(null); setLoading(previous => ({ ...previous, notebooks: true })); setError(""); setRetry(previous => previous + 1); }}>Tentar novamente</button>}</div>}
+    {(error || notice) && <div className={"status-banner " + (error ? "error" : "")}><span role={error ? "alert" : "status"}>{error || notice}</span>{error && <button disabled={disabled || dirty} onClick={reloadHierarchy}>Tentar novamente</button>}</div>}
     <main className="workspace">{panel("notebooks", notebooks, notebookId)}{panel("sections", sections, sectionId)}{panel("pages", visiblePages, page?.id ?? null)}
       <section className="editor-panel" aria-label="Editor">
         {page ? <><div className="editor-toolbar"><span role="status">{busy ? "Salvando..." : dirty ? "Alterações não salvas" : "Salvo"}</span><button className="quiet-button" disabled={busy || !dirty || !loaded.editable} onClick={() => void save()}>Salvar</button><button className="quiet-button" onClick={downloadDraft}>Baixar texto</button></div>
           <div className="editor-content"><input aria-label="Título da página" className="note-title" maxLength={100} disabled={busy || !loaded.editable} value={draft.title} onChange={event => setDraft(previous => ({ ...previous, title: event.target.value }))} />
             <div className="note-tags"><span>{notebooks.find(row => row.id === notebookId)?.title}</span><span>{sections.find(row => row.id === sectionId)?.title}</span></div>
             {!loaded.editable && <p role="status">Esta página usa outro formato. O conteúdo está disponível para leitura e download.</p>}
+            {unavailable && <div className="conflict-card" role="alert"><strong>Página indisponível.</strong><p>A página ou um de seus pais pode ter sido movido para a lixeira em outra janela. Seu rascunho continua aqui. Restaure o item pela lixeira e tente salvar novamente, ou baixe o texto antes de descartar as alterações.</p><button className="quiet-button" disabled={busy} onClick={() => void loadTrash()}>Abrir lixeira</button><button className="quiet-button" disabled={busy} onClick={downloadDraft}>Baixar meu rascunho</button><button className="quiet-button" disabled={busy} onClick={discardUnavailableDraft}>Descartar rascunho e recarregar</button></div>}
             <textarea ref={bodyRef} aria-label="Conteúdo da página" className="note-body" placeholder="Comece a escrever..." readOnly={!loaded.editable} disabled={busy} value={draft.text} onChange={event => setDraft(previous => ({ ...previous, text: event.target.value }))} />
             {loaded.editable && <div className="text-tools"><button disabled={busy} className="quiet-button" onClick={() => insertText("\n• ")}>Adicionar lista</button><button disabled={busy} className="quiet-button" onClick={() => insertText("\n☐ ")}>Adicionar tarefa</button><small>Ctrl/⌘ + S para salvar. Trocar de página também salva suas alterações.</small></div>}
             {conflict && <div className="conflict-card" role="alert"><strong>Há uma versão mais recente.</strong><p>Seu rascunho foi preservado. Baixe uma cópia antes de abrir a versão salva.</p><pre>{readText(conflict.content_json).text}</pre><button className="quiet-button" onClick={downloadDraft}>Baixar meu rascunho</button><button className="quiet-button" onClick={() => { openPage(conflict); setPages(previous => previous.map(row => row.id === conflict.id ? conflict : row)); setError(""); }}>Abrir versão salva</button></div>}
