@@ -1,0 +1,623 @@
+
+/* MYNOTES — Interface macOS */
+
+/* Ajustes globais */
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Arial, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: block;
+  min-width: 320px;
+}
+
+#root {
+  max-width: none;
+  text-align: left;
+}
+
+.notes-app {
+  --text: #17243a;
+  --muted: #65748b;
+  --accent: #1673e6;
+  --accent-soft: rgba(22, 115, 230, 0.13);
+  --window: rgba(235, 243, 253, 0.64);
+  --panel: rgba(245, 249, 255, 0.24);
+  --editor: rgba(255, 255, 255, 0.48);
+  --card: rgba(255, 255, 255, 0.36);
+  --border: rgba(255, 255, 255, 0.65);
+  --shadow: rgba(28, 49, 80, 0.17);
+
+  color-scheme: light;
+  color: var(--text);
+
+  min-height: 100dvh;
+  padding: 22px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      ellipse at 15% 85%,
+      #6b8ebc 0%,
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 85% 10%,
+      #c2d7ef 0%,
+      transparent 48%
+    ),
+    linear-gradient(
+      135deg,
+      #d7e4f4,
+      #9bb4d4 52%,
+      #dfe9f5
+    );
+}
+
+/* Modo escuro */
+.notes-app[data-theme="dark"] {
+  --text: #edf3fc;
+  --muted: #a2b2c8;
+  --accent: #4d9dff;
+  --accent-soft: rgba(77, 157, 255, 0.19);
+  --window: rgba(18, 31, 51, 0.73);
+  --panel: rgba(18, 33, 55, 0.40);
+  --editor: rgba(12, 24, 42, 0.52);
+  --card: rgba(43, 65, 94, 0.38);
+  --border: rgba(185, 208, 238, 0.16);
+  --shadow: rgba(0, 0, 0, 0.40);
+
+  color-scheme: dark;
+
+  background:
+    radial-gradient(
+      ellipse at 10% 90%,
+      #26486f 0%,
+      transparent 47%
+    ),
+    radial-gradient(
+      ellipse at 90% 10%,
+      #36567d 0%,
+      transparent 45%
+    ),
+    linear-gradient(
+      135deg,
+      #0b1423,
+      #182b44 55%,
+      #101b2d
+    );
+}
+
+/* Camadas de fundo desfocadas */
+.notes-app::before,
+.notes-app::after {
+  content: "";
+  position: absolute;
+  width: 48vw;
+  height: 48vw;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.28;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.notes-app::before {
+  background: #ffffff;
+  top: -24vw;
+  right: -12vw;
+}
+
+.notes-app::after {
+  background: #4d80c0;
+  bottom: -26vw;
+  left: -10vw;
+}
+
+/* Janela principal */
+.app-window {
+  width: 100%;
+  max-width: 1700px;
+  height: calc(100dvh - 44px);
+  min-height: 650px;
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  background: var(--window);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+
+  backdrop-filter: blur(35px) saturate(150%);
+  -webkit-backdrop-filter: blur(35px) saturate(150%);
+
+  box-shadow:
+    0 28px 75px var(--shadow),
+    inset 0 1px rgba(255, 255, 255, 0.20);
+}
+
+/* Barra superior */
+.app-header {
+  height: 76px;
+  min-height: 76px;
+  padding: 0 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  font-size: 19px;
+}
+
+.app-logo {
+  display: grid;
+  place-items: center;
+  width: 39px;
+  height: 39px;
+
+  color: white;
+  background: linear-gradient(
+    145deg,
+    #48a2ff,
+    #1260cc
+  );
+
+  border-radius: 11px;
+  box-shadow: 0 4px 12px rgba(0, 90, 200, 0.24);
+  font-size: 24px;
+}
+
+.search-input {
+  width: min(420px, 35vw);
+  height: 39px;
+  padding: 0 15px;
+
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--card);
+  color: var(--text);
+
+  font-size: 13px;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.notes-app button {
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+
+.theme-button {
+  width: 38px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--card);
+  color: var(--accent) !important;
+  font-size: 22px !important;
+}
+
+.account-status {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+}
+
+/* Área de trabalho */
+.workspace {
+  display: grid;
+  grid-template-columns:
+    210px 190px 225px minmax(0, 1fr);
+
+  flex: 1;
+  min-height: 0;
+}
+
+/* Painéis de navegação */
+.panel {
+  min-width: 0;
+  padding: 19px 12px;
+
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.panel h3 {
+  margin: 0 0 18px 7px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.panel-title button {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 29px;
+  height: 29px;
+  font-size: 19px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 43px;
+  margin-bottom: 5px;
+  padding: 0 12px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  font-size: 13px !important;
+}
+
+.nav-item:hover,
+.page-item:hover {
+  background: var(--card);
+}
+
+.nav-item.selected,
+.page-item.selected {
+  color: var(--text);
+  background: var(--accent-soft);
+  border-color: rgba(80, 145, 220, 0.13);
+}
+
+.nav-dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.section-indicator {
+  width: 7px;
+  height: 25px;
+  border-radius: 7px;
+  background: var(--accent);
+}
+
+.sections-panel .nav-item:nth-of-type(3n) .section-indicator {
+  background: #45b881;
+}
+
+.sections-panel .nav-item:nth-of-type(4n) .section-indicator {
+  background: #e4ac45;
+}
+
+/* Lista de páginas */
+.page-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  width: 100%;
+  min-height: 52px;
+  padding: 13px 9px;
+  margin-bottom: 5px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+
+  text-align: left;
+  font-size: 12px !important;
+  line-height: 1.45;
+}
+
+.page-icon {
+  color: var(--accent);
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* Editor de anotações */
+.editor-panel {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  background: var(--editor);
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 21px;
+
+  min-height: 58px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.editor-toolbar span:first-child {
+  padding-right: 15px;
+  border-right: 1px solid var(--border);
+}
+
+.editor-content {
+  flex: 1;
+  min-height: 0;
+
+  padding: 29px 35px 100px;
+  overflow-y: auto;
+}
+
+.note-title {
+  display: block;
+  width: 100%;
+  margin-bottom: 17px;
+
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+
+  font-size: clamp(23px, 2.2vw, 32px);
+  font-weight: 700;
+  letter-spacing: -0.7px;
+}
+
+.note-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.note-tags span {
+  padding: 6px 11px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.note-body {
+  display: block;
+  width: 100%;
+  height: 150px;
+  resize: vertical;
+
+  padding: 0;
+  margin: 0 0 20px;
+
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* Blocos das anotações */
+.tasks-card,
+.note-card {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+
+  padding: 22px;
+  margin-bottom: 18px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  box-shadow: 0 4px 14px rgba(15, 30, 55, 0.035);
+}
+
+.tasks-card h3,
+.note-card h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.tasks-card label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.tasks-card input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.note-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Botão de nova anotação */
+.new-note-button {
+  position: absolute;
+  right: 25px;
+  bottom: 22px;
+
+  padding: 14px 23px;
+  border: none;
+  border-radius: 25px;
+
+  color: #fff !important;
+  background: linear-gradient(
+    135deg,
+    #3297ff,
+    #075ac9
+  );
+
+  font-size: 14px !important;
+  font-weight: 600 !important;
+
+  box-shadow: 0 7px 24px rgba(17, 103, 210, 0.3);
+}
+
+.new-note-button:hover {
+  filter: brightness(1.08);
+}
+
+/* Adaptação para telas menores */
+@media (max-width: 1200px) {
+  .workspace {
+    grid-template-columns:
+      165px 155px 195px minmax(0, 1fr);
+  }
+
+  .editor-content {
+    padding: 25px 22px 100px;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns:
+      165px 195px minmax(0, 1fr);
+  }
+
+  .sections-panel {
+    display: none;
+  }
+
+  .account-status {
+    display: none;
+  }
+}
+
+@media (max-width: 650px) {
+  .notes-app {
+    padding: 8px;
+  }
+
+  .app-window {
+    height: calc(100dvh - 16px);
+    min-height: 0;
+    border-radius: 15px;
+  }
+
+  .app-header {
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .app-brand strong {
+    display: none;
+  }
+
+  .search-input {
+    flex: 1;
+    width: 100px;
+    min-width: 0;
+  }
+
+  .workspace {
+    grid-template-columns: 125px minmax(0, 1fr);
+  }
+
+  .notebooks-panel {
+    display: none;
+  }
+
+  .editor-toolbar {
+    padding: 0 15px;
+    gap: 13px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .editor-content {
+    padding: 22px 15px 90px;
+  }
+
+  .note-title {
+    font-size: 23px;
+  }
+
+  .new-note-button {
+    right: 15px;
+    bottom: 15px;
+  }
+}
