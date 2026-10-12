@@ -1,251 +1,119 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Minhas Anotações</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="description" content="Cadernos e anotações pessoais, com login seguro e salvamento na nuvem.">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
 </head>
-<body>
-  <div class="app-background"></div>
+<body data-theme="light">
+  <div class="app-background" aria-hidden="true"></div>
 
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-icon">🗒</div>
-        <div class="brand-title">Minhas Anotações</div>
+  <main id="loginView" class="auth-screen">
+    <section class="auth-card">
+      <div class="auth-symbol">▤</div>
+      <h1>Minhas Anotações</h1>
+      <p>Um espaço para organizar suas ideias com privacidade.</p>
+      <button id="googleLogin" class="auth-google" type="button">Continuar com Google</button>
+      <div class="auth-divider">ou entre com e-mail</div>
+      <form id="authForm">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" autocomplete="email" required>
+        <label for="password">Senha</label>
+        <input id="password" type="password" autocomplete="current-password" minlength="6" required>
+        <button id="authSubmit" class="auth-submit" type="submit">Entrar</button>
+      </form>
+      <div class="auth-links">
+        <button id="toggleRegister" type="button">Criar uma conta</button>
+        <button id="resetPassword" type="button">Esqueci minha senha</button>
       </div>
+      <p id="authError" class="feedback" role="status"></p>
+    </section>
+  </main>
 
+  <main id="verifyView" class="auth-screen" hidden>
+    <section class="auth-card">
+      <div class="auth-symbol">✉</div>
+      <h1>Confirme seu e-mail</h1>
+      <p>Abra a mensagem de confirmação recebida e clique no link. Depois volte aqui.</p>
+      <button id="verifyAgain" type="button" class="auth-submit">Já confirmei meu e-mail</button>
+      <button id="verifyResend" type="button" class="auth-google">Reenviar confirmação</button>
+      <button id="verifyExit" type="button" class="auth-text">Voltar ao login</button>
+      <p id="verifyMessage" class="feedback" role="status"></p>
+    </section>
+  </main>
+
+  <div id="appView" class="app-shell" hidden>
+    <header class="topbar">
+      <div class="brand"><span class="brand-icon">▤</span><strong class="brand-title">Minhas Anotações</strong></div>
       <div class="topbar-right">
-        <span class="user-email">frederico.fahndrich@gmail.com</span>
-        <button class="icon-btn" id="themeToggle" title="Alternar tema">☀</button>
-        <button class="logout-btn">Sair</button>
+        <span id="accountEmail" class="user-email"></span>
+        <button id="themeToggle" class="icon-btn" title="Alternar claro/escuro" aria-label="Alternar tema" type="button">☾</button>
+        <button id="logoutButton" class="logout-btn" type="button">Sair</button>
       </div>
     </header>
 
     <main class="workspace">
-      <!-- CADERNOS -->
-      <aside class="panel panel-sidebar">
-        <div class="panel-header">
-          <h2>Cadernos</h2>
-          <button class="add-btn">+</button>
-        </div>
-
-        <div class="list">
-          <div class="list-item active">
-            <span class="item-icon">🏠</span>
-            <span class="item-name">Pessoal</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">💼</span>
-            <span class="item-name">Trabalho</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">📚</span>
-            <span class="item-name">Estudos</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">💡</span>
-            <span class="item-name">Projetos</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">⭐</span>
-            <span class="item-name">Ideias</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">📄</span>
-            <span class="item-name">Referências</span>
-            <span class="item-menu">⋮</span>
-          </div>
-        </div>
-
+      <aside class="panel panel-sidebar" aria-label="Cadernos">
+        <div class="panel-header"><h2>Cadernos</h2><button id="newNotebook" class="add-btn" type="button" aria-label="Criar caderno">+</button></div>
+        <nav id="notebooksList" class="list"></nav>
         <div class="sidebar-footer">
-          <button class="outline-btn">＋ Inserir exemplos</button>
-          <button class="ghost-btn">🗑 Lixeira</button>
+          <button id="insertExamples" class="outline-btn" type="button">＋ Inserir exemplos</button>
+          <button id="openTrash" class="ghost-btn" type="button">♲ Lixeira</button>
         </div>
       </aside>
-
-      <!-- SEÇÕES -->
-      <aside class="panel panel-sections">
-        <div class="panel-header">
-          <h2>Seções</h2>
-          <button class="add-btn">+</button>
-        </div>
-
-        <div class="list">
-          <div class="list-item active">
-            <span class="item-icon">🧾</span>
-            <span class="item-name">Primeiros passos</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">⚡</span>
-            <span class="item-name">Anotações rápidas</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">✅</span>
-            <span class="item-name">Tarefas</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">👤</span>
-            <span class="item-name">Pessoal</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">❤️</span>
-            <span class="item-name">Saúde</span>
-            <span class="item-menu">⋮</span>
-          </div>
-
-          <div class="list-item">
-            <span class="item-icon">✈️</span>
-            <span class="item-name">Viagens</span>
-            <span class="item-menu">⋮</span>
-          </div>
-        </div>
+      <aside class="panel panel-sections" aria-label="Seções">
+        <div class="panel-header"><h2>Seções</h2><button id="newSection" class="add-btn" type="button" aria-label="Criar seção">+</button></div>
+        <nav id="sectionsList" class="list"></nav>
       </aside>
-
-      <!-- ANOTAÇÕES -->
-      <section class="panel panel-pages">
-        <div class="panel-header">
-          <h2>Anotações</h2>
-          <button class="add-btn">+</button>
-        </div>
-
-        <div class="search-box">
-          <input type="text" placeholder="Buscar nesta seção..." />
-        </div>
-
-        <div class="pages-list">
-          <div class="page-item active">
-            <div class="page-title">Bem-vindo ao Minhas Anotações</div>
-            <div class="page-date">Hoje, 10:24</div>
-          </div>
-
-          <div class="page-item">
-            <div class="page-title">Como organizar minhas anotações</div>
-            <div class="page-date">Hoje, 10:15</div>
-          </div>
-
-          <div class="page-item">
-            <div class="page-title">Minha primeira nota</div>
-            <div class="page-date">Hoje, 09:42</div>
-          </div>
-
-          <div class="page-item">
-            <div class="page-title">Ideias para o futuro</div>
-            <div class="page-date">Ontem, 18:30</div>
-          </div>
-
-          <div class="page-item">
-            <div class="page-title">Lista de tarefas</div>
-            <div class="page-date">Ontem, 15:12</div>
-          </div>
-        </div>
+      <section class="panel panel-pages" aria-label="Anotações">
+        <div class="panel-header"><h2>Anotações</h2><button id="newPage" class="add-btn" type="button" aria-label="Criar anotação">+</button></div>
+        <div class="search-box"><input id="searchInput" type="search" placeholder="Buscar nesta seção..." aria-label="Buscar anotações"></div>
+        <nav id="pagesList" class="pages-list"></nav>
       </section>
-
-      <!-- EDITOR -->
-      <section class="panel panel-editor">
+      <section class="panel panel-editor" aria-label="Editor">
         <div class="editor-topline">
-          <div class="breadcrumb">Pessoal / Primeiros passos</div>
+          <span id="breadcrumb" class="breadcrumb">Meu espaço pessoal</span>
           <div class="editor-tools">
-            <button class="tool-btn">✎</button>
-            <button class="tool-btn danger">🗑</button>
-            <button class="tool-btn">⋯</button>
+            <button id="downloadButton" class="tool-btn" type="button" title="Baixar anotação" aria-label="Baixar anotação">↓</button>
+            <button id="saveButton" class="tool-btn" type="button" title="Salvar anotação">✓</button>
           </div>
         </div>
-
-        <h1 class="editor-title">Bem-vindo ao Minhas Anotações</h1>
-
-        <div class="editor-meta">
-          <span>Última atualização: 10/10/2026 10:24</span>
-          <span class="save-status">✔ Salvo automaticamente</span>
-        </div>
-
-        <div class="welcome-card">
-          <div class="welcome-text">
-            <h3>👋 Bem-vindo ao Minhas Anotações!</h3>
-            <p>
-              Este é o seu espaço pessoal para registrar ideias,
-              organizar informações e acompanhar atividades de forma
-              simples e privada.
-            </p>
-            <p>
-              Os seus dados são armazenados na sua conta e somente você
-              tem acesso.
-            </p>
+        <div id="welcomeView">
+          <h1 class="editor-title">Bem-vindo ao Minhas Anotações</h1>
+          <div class="welcome-card">
+            <div class="welcome-text"><h3>Seu espaço pessoal de anotações</h3><p>Crie cadernos, organize seções e registre informações. Seus dados são associados à sua conta e salvos no Cloudflare D1.</p></div>
+            <div class="welcome-illustration" aria-hidden="true">📝</div>
           </div>
-
-          <div class="welcome-illustration">
-            📝
-          </div>
-        </div>
-
-        <div class="usage-section">
-          <h2>📘 Como utilizar</h2>
-
-          <div class="usage-grid">
-            <div class="usage-card">
-              <div class="usage-number blue">1</div>
-              <h4>Cadernos</h4>
-              <p>Organizam os assuntos, como Pessoal, Trabalho, Estudos ou Projetos.</p>
-            </div>
-
-            <div class="usage-card">
-              <div class="usage-number green">2</div>
-              <h4>Seções</h4>
-              <p>Estruturam os conteúdos dentro de cada caderno.</p>
-            </div>
-
-            <div class="usage-card">
-              <div class="usage-number orange">3</div>
-              <h4>Anotações</h4>
-              <p>Selecione uma seção e clique no botão + para criar uma nova anotação.</p>
-            </div>
-
-            <div class="usage-card">
-              <div class="usage-number purple">4</div>
-              <h4>Editor</h4>
-              <p>Escreva o título e o conteúdo. O sistema salva automaticamente após uma pausa na digitação.</p>
-            </div>
-
-            <div class="usage-card">
-              <div class="usage-number pink">5</div>
-              <h4>Organização</h4>
-              <p>Use o menu de três pontos para renomear itens e o ícone de lixeira para excluí-los.</p>
-            </div>
-
-            <div class="usage-card">
-              <div class="usage-number gold">6</div>
-              <h4>Lixeira</h4>
-              <p>Os itens excluídos podem ser restaurados posteriormente.</p>
+          <div class="usage-section">
+            <h2>Como utilizar</h2>
+            <div class="usage-grid">
+              <div class="usage-card"><span class="usage-number blue">1</span><h4>Cadernos</h4><p>Separe os assuntos: Pessoal, Trabalho, Estudos e Projetos.</p></div>
+              <div class="usage-card"><span class="usage-number green">2</span><h4>Seções</h4><p>Crie temas dentro de cada caderno.</p></div>
+              <div class="usage-card"><span class="usage-number orange">3</span><h4>Anotações</h4><p>Selecione uma seção e clique em + para criar sua página.</p></div>
+              <div class="usage-card"><span class="usage-number purple">4</span><h4>Editor</h4><p>Escreva e salve com Ctrl/⌘ + S ou aguarde o salvamento automático.</p></div>
+              <div class="usage-card"><span class="usage-number pink">5</span><h4>Organização</h4><p>Use ⋮ ao lado de um item para renomear ou mover à lixeira.</p></div>
+              <div class="usage-card"><span class="usage-number gold">6</span><h4>Lixeira</h4><p>Restaure cadernos, seções e anotações removidos.</p></div>
             </div>
           </div>
         </div>
-
-        <div class="tip-card">
-          💡 Experimente editar esta página e salvá-la. Depois atualize o navegador para confirmar que a alteração foi armazenada no banco de dados.
+        <div id="editorView" class="real-editor" hidden>
+          <input id="pageTitle" class="real-title" type="text" maxlength="100" aria-label="Título da anotação" placeholder="Título da anotação">
+          <div class="editor-meta"><span id="updatedAt"></span><span id="saveState" class="save-status">✓ Salvo</span></div>
+          <textarea id="pageText" class="real-text" aria-label="Conteúdo da anotação" placeholder="Comece a escrever..."></textarea>
+          <div class="real-footer"><span>Texto simples</span><span>Ctrl/⌘ + S para salvar</span></div>
         </div>
       </section>
     </main>
+    <div id="statusBar" class="status-bar" role="status"></div>
   </div>
 
-  <script src="app.js"></script>
+  <dialog id="trashDialog" class="trash-dialog">
+    <div class="trash-heading"><h2>Lixeira</h2><button id="closeTrash" type="button">Fechar</button></div>
+    <p>Se o item estiver dentro de um caderno ou seção excluído, restaure primeiro o item pai.</p>
+    <div id="trashList"></div>
+  </dialog>
 </body>
 </html>
