@@ -16,7 +16,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
 // CONFIGURAÇÃO
-const WORKER_URL = "https://SEU-WORKER.workers.dev";
+const WORKER_URL = "https://mynotes-backend.frederico-fahndrich.workers.dev/";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAQn6YlOwkgHOLXs272-tcwMl1YP_SScwA",
