@@ -1,0 +1,66 @@
+/* Transferência entre cadernos e seções — área autenticada */
+#appView .mn-transfer-trigger,
+#appView.dashboard-shell .rich-toolbar .mn-transfer-trigger {
+  width:auto; min-width:0; min-height:32px; padding:5px 9px;
+  color:#1d63dc; font-size:12px; font-weight:650;
+  background:rgba(222,237,255,.68); border:1px solid rgba(133,177,239,.42);
+  border-radius:9px; white-space:nowrap; cursor:pointer;
+}
+#appView .mn-transfer-trigger:hover,
+#appView.dashboard-shell .rich-toolbar .mn-transfer-trigger:hover {background:#cbe0ff}
+.mn-transfer-dialog {
+  width:min(500px,calc(100% - 24px)); max-height:min(660px,calc(100dvh - 24px));
+  padding:0; overflow:auto; border:1px solid rgba(255,255,255,.78);
+  border-radius:21px; color:#18335a;
+  background:rgba(243,250,255,.96);
+  box-shadow:0 28px 80px rgba(4,31,79,.32);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+}
+.mn-transfer-dialog::backdrop {background:rgba(9,30,65,.48);backdrop-filter:blur(5px)}
+.mn-transfer-dialog form {display:grid;gap:18px;padding:25px}
+.mn-transfer-header {display:flex;align-items:center;gap:12px}
+.mn-transfer-header>div:nth-child(2){flex:1;min-width:0}
+.mn-transfer-mark {flex:0 0 42px;height:42px;display:grid;place-items:center;
+  background:linear-gradient(140deg,#5ca9ff,#1d63dc);color:#fff;
+  border-radius:12px;font-size:22px}
+.mn-transfer-header h2{margin:0;font-size:18px;letter-spacing:-.4px}
+.mn-transfer-subtitle{margin:4px 0 0;color:#6b7e99;font-size:12px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mn-transfer-close{flex:0 0 32px;height:32px;border:0;border-radius:9px;
+  color:#486483;background:rgba(190,216,244,.32);font-size:24px;cursor:pointer}
+.mn-transfer-modes{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0;border:0}
+.mn-transfer-modes legend{font-size:12px;font-weight:700;margin-bottom:9px;color:#4b6180}
+.mn-transfer-modes label{display:flex;align-items:flex-start;gap:8px;min-width:0;
+  padding:11px;border:1px solid #d5e4f7;border-radius:12px;
+  background:rgba(255,255,255,.66);cursor:pointer}
+.mn-transfer-modes label:has(input:checked){border-color:#4b92f1;background:#e5f0ff}
+.mn-transfer-modes input{accent-color:#1d63dc;margin:3px 0 0;flex:none}
+.mn-transfer-modes strong{display:block;font-size:13px}
+.mn-transfer-modes small{display:block;margin-top:5px;color:#5f7190;
+  line-height:1.45;font-size:11px}
+.mn-transfer-field{display:grid;gap:7px}
+.mn-transfer-field label{color:#3c5376;font-size:12px;font-weight:700}
+.mn-transfer-field select{width:100%;height:42px;padding:0 12px;border-radius:10px;
+  border:1px solid #d0deef;background:rgba(255,255,255,.8);color:#17345c;
+  font:inherit;font-size:13px}
+.mn-transfer-feedback{min-height:17px;margin:0;color:#516787;font-size:12px;line-height:1.5}
+.mn-transfer-feedback.error{color:#b91c1c}
+.mn-transfer-actions{display:flex;justify-content:flex-end;gap:10px}
+.mn-transfer-actions button{height:40px;min-width:105px;padding:0 16px;
+  border-radius:10px;font-weight:650;font-size:13px;cursor:pointer}
+.mn-transfer-cancel{background:rgba(255,255,255,.65);border:1px solid #d7e4f3;color:#35506d}
+.mn-transfer-submit{background:linear-gradient(110deg,#2778ed,#1056cb);color:#fff;border:0;
+  box-shadow:0 5px 15px rgba(21,85,192,.22)}
+.mn-transfer-actions button:disabled{opacity:.48;cursor:not-allowed}
+body[data-theme="dark"] .mn-transfer-dialog{background:rgba(17,34,59,.97);border-color:#38547a;color:#edf5ff}
+body[data-theme="dark"] .mn-transfer-modes label{background:#243c60;border-color:#3b577b}
+body[data-theme="dark"] .mn-transfer-modes label:has(input:checked){background:#194b88;border-color:#75adff}
+body[data-theme="dark"] .mn-transfer-modes small,body[data-theme="dark"] .mn-transfer-subtitle,
+body[data-theme="dark"] .mn-transfer-field label,body[data-theme="dark"] .mn-transfer-feedback,
+body[data-theme="dark"] .mn-transfer-modes legend{color:#acc3e4}
+body[data-theme="dark"] .mn-transfer-field select{background:#193453;color:#eef6ff;border-color:#45618a}
+body[data-theme="dark"] .mn-transfer-cancel{background:#274363;color:#e9f3ff;border-color:#476181}
+@media(max-width:480px){.mn-transfer-dialog form{padding:17px;gap:14px}
+.mn-transfer-modes{grid-template-columns:1fr}
+#appView .mn-transfer-trigger{font-size:0;min-width:32px;padding:4px 6px}
+#appView .mn-transfer-trigger::before{content:'⇄';font-size:19px}}
