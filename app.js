@@ -1,4 +1,3 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup,
@@ -32,15 +31,14 @@ const state = {
   page: null,
   dirty: false,
   saving: null,
-  busy: false
+  busy: false,
+  showGuideEditor: false
 };
 
 let registerMode = false;
 let autosaveTimer = null;
 
-// ================================================
-// INTERFACE E UTILIDADES
-// ================================================
+// INTERFACE
 
 function show(view) {
   for (const id of ["loginView", "verifyView", "appView"]) {
@@ -79,15 +77,11 @@ function current() {
   );
 }
 
-// ================================================
-// TEMA CLARO / ESCURO
-// ================================================
+// TEMA
 
 function theme(value) {
   document.body.dataset.theme = value;
-
   localStorage.setItem("mynotes-theme", value);
-
   $("themeToggle").textContent =
     value === "dark" ? "☀" : "☾";
 }
@@ -106,9 +100,7 @@ $("themeToggle").onclick = () => {
   );
 };
 
-// ================================================
 // API CLOUDFLARE
-// ================================================
 
 async function api(path, method = "GET", body) {
   const user = auth.currentUser;
@@ -150,9 +142,7 @@ async function api(path, method = "GET", body) {
   return data;
 }
 
-// ================================================
-// FIREBASE — LOGIN E CADASTRO
-// ================================================
+// LOGIN FIREBASE
 
 $("authForm").onsubmit = async event => {
   event.preventDefault();
@@ -165,19 +155,13 @@ $("authForm").onsubmit = async event => {
 
   try {
     if (registerMode) {
-      const result =
-        await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-
+      const result = await createUserWithEmailAndPassword(
+        auth, email, password
+      );
       await sendEmailVerification(result.user);
     } else {
       await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
+        auth, email, password
       );
     }
 
@@ -189,7 +173,6 @@ $("authForm").onsubmit = async event => {
   }
 };
 
-// LOGIN GOOGLE
 $("googleLogin").onclick = async () => {
   try {
     await signInWithPopup(
@@ -201,7 +184,6 @@ $("googleLogin").onclick = async () => {
   }
 };
 
-// ALTERNAR CADASTRO / LOGIN
 $("toggleRegister").onclick = () => {
   registerMode = !registerMode;
 
@@ -221,7 +203,6 @@ $("toggleRegister").onclick = () => {
   authMessage("");
 };
 
-// RECUPERAR SENHA
 $("resetPassword").onclick = async () => {
   const email = $("email").value.trim();
 
@@ -235,15 +216,13 @@ $("resetPassword").onclick = async () => {
     await sendPasswordResetEmail(auth, email);
 
     authMessage(
-      "Se a conta existir, você receberá " +
-      "instruções por e-mail."
+      "Se a conta existir, você receberá instruções por e-mail."
     );
   } catch (error) {
     authMessage(errorText(error));
   }
 };
 
-// CONFIRMAR E-MAIL
 $("verifyAgain").onclick = async () => {
   try {
     const user = auth.currentUser;
@@ -268,7 +247,6 @@ $("verifyAgain").onclick = async () => {
   }
 };
 
-// REENVIAR CONFIRMAÇÃO
 $("verifyResend").onclick = async () => {
   try {
     if (!auth.currentUser) {
@@ -289,9 +267,7 @@ $("verifyResend").onclick = async () => {
 
 $("verifyExit").onclick = () => signOut(auth);
 
-// ================================================
 // CONTEÚDO DAS ANOTAÇÕES
-// ================================================
 
 function decode(content) {
   try {
@@ -348,22 +324,17 @@ function date(value) {
       });
 }
 
-// ================================================
-// LISTAS — CADERNOS, SEÇÕES, ANOTAÇÕES
-// ================================================
+// LISTAS
 
 function empty(container, label) {
   const p = document.createElement("p");
-
   p.className = "empty-message";
   p.textContent = label;
-
   container.replaceChildren(p);
 }
 
 function drawList(containerId, rows, chosen, kind) {
   const container = $(containerId);
-
   container.replaceChildren();
 
   if (!rows.length) {
@@ -375,14 +346,31 @@ function drawList(containerId, rows, chosen, kind) {
           ? "Selecione um caderno e crie uma seção."
           : "Selecione uma seção e crie sua primeira anotação."
     );
-
     return;
   }
 
   const icons = {
-    notebooks: "▣",
-    sections: "◈",
-    pages: "▤"
+    notebooks: {
+      "Pessoal": "🏠",
+      "Pessoais": "🏠",
+      "Trabalho": "💼",
+      "Estudos": "📚",
+      "Projetos": "💡",
+      "Ideias": "⭐",
+      "Referências": "📄"
+    },
+    sections: {
+      "Primeiros passos": "📋",
+      "Anotações rápidas": "⚡",
+      "Tarefas": "✅",
+      "Planejamento": "📅",
+      "Reuniões": "🗓️",
+      "Conteúdos": "📖",
+      "Ideias": "💡",
+      "Pessoal": "👤",
+      "Saúde": "❤️",
+      "Viagens": "✈️"
+    }
   };
 
   for (const row of rows) {
@@ -393,13 +381,14 @@ function drawList(containerId, rows, chosen, kind) {
       (row.id === chosen ? " active" : "");
 
     const button = document.createElement("button");
-
     button.className = "row-main";
     button.type = "button";
 
     const icon = document.createElement("span");
     icon.className = "item-icon";
-    icon.textContent = icons[kind];
+    icon.textContent = kind === "pages"
+      ? "▤"
+      : (icons[kind][row.title] || "▣");
 
     const label = document.createElement("span");
     label.className = "row-name";
@@ -409,9 +398,7 @@ function drawList(containerId, rows, chosen, kind) {
 
     if (kind === "pages") {
       const caption = document.createElement("small");
-
       caption.textContent = date(row.updated_at);
-
       label.append(caption);
     }
 
@@ -426,7 +413,6 @@ function drawList(containerId, rows, chosen, kind) {
     };
 
     const menu = document.createElement("button");
-
     menu.type = "button";
     menu.className = "item-menu action-menu";
     menu.textContent = "⋮";
@@ -462,10 +448,10 @@ function draw() {
   const search = $("searchInput")
     .value.toLocaleLowerCase("pt-BR");
 
-  const results = state.pages.filter(p =>
+  const results = state.pages.filter(page =>
     (
-      p.title + " " +
-      decode(p.content_json).text
+      page.title + " " +
+      decode(page.content_json).text
     )
       .toLocaleLowerCase("pt-BR")
       .includes(search)
@@ -488,15 +474,25 @@ function draw() {
   $("downloadButton").disabled = !state.page;
 }
 
-// ================================================
-// EDITOR
-// ================================================
+// EDITOR E GUIA DE BOAS-VINDAS
 
 function drawEditor() {
   const page = state.page;
 
-  $("welcomeView").hidden = Boolean(page);
-  $("editorView").hidden = !page;
+  const isDefaultGuide = Boolean(
+    page &&
+    page.title === "Bem-vindo ao Minhas Anotações" &&
+    decode(page.content_json).text ===
+      examples[0].sections[0].pages[0].text
+  );
+
+  const showGuide =
+    !page ||
+    (isDefaultGuide && !state.showGuideEditor);
+
+  $("welcomeView").hidden = !showGuide;
+  $("editorView").hidden = showGuide;
+  $("editWelcomeButton").hidden = !isDefaultGuide;
 
   if (!page) {
     $("breadcrumb").textContent =
@@ -522,7 +518,6 @@ function drawEditor() {
     state.notebooks.find(
       n => n.id === state.notebookId
     )?.title,
-
     state.sections.find(
       s => s.id === state.sectionId
     )?.title
@@ -533,7 +528,14 @@ function drawEditor() {
   state.dirty = false;
 }
 
-// DETECTAR MODIFICAÇÕES
+$("editWelcomeButton").onclick = () => {
+  if (!state.page) return;
+
+  state.showGuideEditor = true;
+  drawEditor();
+  $("pageText").focus();
+};
+
 function updateDirty() {
   if (
     !state.page ||
@@ -564,7 +566,8 @@ function updateDirty() {
 $("pageTitle").oninput = updateDirty;
 $("pageText").oninput = updateDirty;
 
-// SALVAMENTO NO D1
+// SALVAMENTO AUTOMÁTICO NO D1
+
 async function save() {
   clearTimeout(autosaveTimer);
 
@@ -591,7 +594,6 @@ async function save() {
       "O título deve ter entre 1 e 100 caracteres.",
       true
     );
-
     return false;
   }
 
@@ -622,8 +624,7 @@ async function save() {
       p.id === data.page.id ? data.page : p
     );
 
-    const saved =
-      decode(data.page.content_json).text;
+    const saved = decode(data.page.content_json).text;
 
     state.dirty =
       $("pageTitle").value !== data.page.title ||
@@ -665,10 +666,10 @@ async function save() {
   }
 }
 
-// BOTÃO SALVAR
 $("saveButton").onclick = () => void save();
 
 // DOWNLOAD DA ANOTAÇÃO
+
 $("downloadButton").onclick = () => {
   if (!state.page) return;
 
@@ -696,7 +697,8 @@ $("downloadButton").onclick = () => {
   );
 };
 
-// ATALHO CTRL + S
+// ATALHO CTRL/COMMAND + S
+
 document.addEventListener("keydown", event => {
   if (
     (event.ctrlKey || event.metaKey) &&
@@ -707,16 +709,13 @@ document.addEventListener("keydown", event => {
   }
 });
 
-// ALERTAR SOBRE ALTERAÇÕES PENDENTES
 window.addEventListener("beforeunload", event => {
   if (state.dirty || state.saving) {
     event.preventDefault();
   }
 });
 
-// ================================================
-// CARREGAR DADOS DO D1
-// ================================================
+// CARREGAMENTO DE CADERNOS
 
 async function loadNotebooks(preferred = null) {
   const response = await api("/api/notebooks");
@@ -730,13 +729,15 @@ async function loadNotebooks(preferred = null) {
   await selectNotebook(id, true);
 }
 
-// SELECIONAR CADERNO
+// SELEÇÃO DE CADERNO
+
 async function selectNotebook(id, skipSave = false) {
   if (!skipSave && !(await save())) return;
 
   const generation = state.generation;
   const nav = ++state.navigation;
 
+  state.showGuideEditor = false;
   state.notebookId = id;
   state.sectionId = null;
   state.page = null;
@@ -762,7 +763,6 @@ async function selectNotebook(id, skipSave = false) {
     }
 
     state.sections = result.sections;
-
     draw();
 
     await selectSection(
@@ -776,13 +776,15 @@ async function selectNotebook(id, skipSave = false) {
   }
 }
 
-// SELECIONAR SEÇÃO
+// SELEÇÃO DE SEÇÃO
+
 async function selectSection(id, skipSave = false) {
   if (!skipSave && !(await save())) return;
 
   const generation = state.generation;
   const nav = ++state.navigation;
 
+  state.showGuideEditor = false;
   state.sectionId = id;
   state.page = null;
   state.pages = [];
@@ -817,7 +819,8 @@ async function selectSection(id, skipSave = false) {
   }
 }
 
-// SELECIONAR ANOTAÇÃO
+// SELEÇÃO DE ANOTAÇÃO
+
 async function selectPage(id) {
   if (
     state.page?.id === id ||
@@ -825,6 +828,8 @@ async function selectPage(id) {
   ) {
     return;
   }
+
+  state.showGuideEditor = false;
 
   state.page = state.pages.find(
     p => p.id === id
@@ -835,6 +840,7 @@ async function selectPage(id) {
 }
 
 // RECARREGAR SEÇÕES
+
 async function refreshSections(preferred) {
   const result = await api(
     "/api/sections?notebook_id=" +
@@ -852,6 +858,7 @@ async function refreshSections(preferred) {
 }
 
 // RECARREGAR ANOTAÇÕES
+
 async function refreshPages(preferred) {
   const result = await api(
     "/api/pages?section_id=" +
@@ -859,6 +866,7 @@ async function refreshPages(preferred) {
   );
 
   state.pages = result.pages;
+  state.showGuideEditor = false;
 
   state.page = state.pages.find(
     p => p.id === preferred
@@ -868,9 +876,7 @@ async function refreshPages(preferred) {
   drawEditor();
 }
 
-// ================================================
 // CRIAR, RENOMEAR E EXCLUIR
-// ================================================
 
 async function changeItem(kind, operation, row = null) {
   if (state.busy || !(await save())) return;
@@ -982,7 +988,6 @@ async function changeItem(kind, operation, row = null) {
         ? "Movido para a lixeira."
         : "Alteração salva."
     );
-
   } catch (error) {
     status(errorText(error), true);
   } finally {
@@ -990,7 +995,8 @@ async function changeItem(kind, operation, row = null) {
   }
 }
 
-// MENU DE CADA ITEM
+// MENU DOS ITENS
+
 async function itemMenu(kind, row) {
   const option = prompt(
     `O que fazer com "${row.title}"?\n` +
@@ -1009,7 +1015,6 @@ async function itemMenu(kind, row) {
   }
 }
 
-// BOTÕES DE CRIAÇÃO
 $("newNotebook").onclick =
   () => void changeItem("notebooks", "create");
 
@@ -1019,12 +1024,9 @@ $("newSection").onclick =
 $("newPage").onclick =
   () => void changeItem("pages", "create");
 
-// BUSCA
 $("searchInput").oninput = draw;
 
-// ================================================
 // LIXEIRA
-// ================================================
 
 async function trash() {
   const dialog = $("trashDialog");
@@ -1068,8 +1070,7 @@ async function trash() {
 
         try {
           await api(
-            `/api/${item.kind}/` +
-            `${encodeURIComponent(item.id)}/restore`,
+            `/api/${item.kind}/${encodeURIComponent(item.id)}/restore`,
             "POST"
           );
 
@@ -1092,7 +1093,6 @@ async function trash() {
       row.append(label, button);
       container.append(row);
     }
-
   } catch (error) {
     status(errorText(error), true);
   }
@@ -1107,9 +1107,7 @@ $("openTrash").onclick = () => void trash();
 $("closeTrash").onclick = () =>
   $("trashDialog").close();
 
-// ================================================
-// CONTEÚDO DE EXEMPLO
-// ================================================
+// EXEMPLOS DE CADERNOS, SEÇÕES E ANOTAÇÕES
 
 const examples = [
   {
@@ -1122,13 +1120,12 @@ const examples = [
             title: "Bem-vindo ao Minhas Anotações",
             text:
               "BEM-VINDO AO MINHAS ANOTAÇÕES\n\n" +
-              "1. CADERNOS: criam grupos de assuntos.\n" +
-              "2. SEÇÕES: organizam as páginas dentro de cada caderno.\n" +
+              "1. CADERNOS: agrupe seus assuntos pessoais e profissionais.\n" +
+              "2. SEÇÕES: separe os temas de cada caderno.\n" +
               "3. ANOTAÇÕES: clique em + para criar uma página.\n" +
-              "4. EDITOR: escreva e utilize Ctrl+S para salvar.\n" +
-              "5. LIXEIRA: permite restaurar itens removidos.\n\n" +
-              "Experimente editar este texto e atualizar " +
-              "a página depois de salvar."
+              "4. EDITOR: escreva e use Ctrl/⌘ + S para salvar.\n" +
+              "5. LIXEIRA: restaure páginas, seções e cadernos removidos.\n\n" +
+              "Experimente editar esta página e atualizar o navegador."
           },
           {
             title: "Como organizar minhas anotações",
@@ -1137,6 +1134,26 @@ const examples = [
               "Trabalho: reuniões e planejamento.\n" +
               "Estudos: conteúdos e revisões.\n" +
               "Projetos: ideias e acompanhamento."
+          },
+          {
+            title: "Minha primeira nota",
+            text:
+              "Esta anotação foi criada como exemplo.\n\n" +
+              "Você pode editar o texto, mudar seu título ou excluí-la."
+          },
+          {
+            title: "Ideias para o futuro",
+            text:
+              "Registre projetos e ideias para desenvolver mais tarde.\n\n" +
+              "Ideia 1:\nIdeia 2:\nIdeia 3:"
+          },
+          {
+            title: "Lista de tarefas",
+            text:
+              "☐ Criar meu primeiro caderno\n" +
+              "☐ Organizar minhas seções\n" +
+              "☐ Testar o salvamento automático\n" +
+              "☐ Revisar minhas prioridades"
           }
         ]
       },
@@ -1144,10 +1161,9 @@ const examples = [
         title: "Anotações rápidas",
         pages: [
           {
-            title: "Minha primeira nota",
+            title: "Captura rápida",
             text:
-              "Registre aqui uma ideia ou lembrete.\n\n" +
-              "Você pode alterar ou excluir este exemplo."
+              "Registre aqui um lembrete ou uma ideia.\n"
           }
         ]
       },
@@ -1155,12 +1171,44 @@ const examples = [
         title: "Tarefas",
         pages: [
           {
-            title: "Lista de tarefas",
+            title: "Checklist semanal",
             text:
-              "☐ Organizar cadernos\n" +
-              "☐ Criar uma anotação\n" +
-              "☐ Testar salvamento\n" +
-              "☐ Revisar prioridades"
+              "☐ Segunda-feira\n" +
+              "☐ Terça-feira\n" +
+              "☐ Quarta-feira"
+          }
+        ]
+      },
+      {
+        title: "Pessoal",
+        pages: [
+          {
+            title: "Metas pessoais",
+            text:
+              "Objetivos do mês:\n\nPróximos passos:"
+          }
+        ]
+      },
+      {
+        title: "Saúde",
+        pages: [
+          {
+            title: "Hábitos e bem-estar",
+            text:
+              "Hábitos que quero acompanhar:\n\nObservações:"
+          }
+        ]
+      },
+      {
+        title: "Viagens",
+        pages: [
+          {
+            title: "Planejamento de viagem",
+            text:
+              "Destino:\n" +
+              "Datas:\n" +
+              "Orçamento:\n" +
+              "Itens necessários:"
           }
         ]
       }
@@ -1175,9 +1223,7 @@ const examples = [
           {
             title: "Planejamento semanal",
             text:
-              "Objetivos:\n\n" +
-              "Prioridades:\n\n" +
-              "Pendências:\n"
+              "Objetivos:\n\nPrioridades:\n\nPendências:"
           }
         ]
       },
@@ -1232,23 +1278,59 @@ const examples = [
         ]
       }
     ]
+  },
+  {
+    title: "Ideias",
+    sections: [
+      {
+        title: "Rascunhos",
+        pages: [
+          {
+            title: "Uma ideia para desenvolver",
+            text:
+              "Descrição da ideia:\n\n" +
+              "Possíveis aplicações:\n\n" +
+              "Próximos passos:"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    title: "Referências",
+    sections: [
+      {
+        title: "Materiais",
+        pages: [
+          {
+            title: "Referências úteis",
+            text:
+              "Livros:\n\n" +
+              "Artigos:\n\n" +
+              "Links:\n\n" +
+              "Observações:"
+          }
+        ]
+      }
+    ]
   }
 ];
 
-// ================================================
-// INSERIR EXEMPLOS NO D1
-// ================================================
+// INSERIR EXEMPLOS NO CLOUDFLARE D1
 
-$("insertExamples").onclick = async () => {
-  if (state.busy || !(await save())) return;
+async function insertExampleData({ automatic = false } = {}) {
+  if (state.busy || !(await save())) {
+    return false;
+  }
 
   if (
+    !automatic &&
     !confirm(
       "Criar exemplos nesta conta? " +
-      "Nenhuma anotação existente será sobrescrita."
+      "Anotações existentes não serão substituídas."
     )
   ) {
-    return;
+    return false;
   }
 
   state.busy = true;
@@ -1257,16 +1339,23 @@ $("insertExamples").onclick = async () => {
   const uid = state.uid;
 
   try {
-    status("Inserindo exemplos...");
+    status(
+      automatic
+        ? "Preparando seus cadernos de boas-vindas..."
+        : "Inserindo exemplos no Cloudflare D1..."
+    );
 
-    const { notebooks } =
-      await api("/api/notebooks");
+    const { notebooks } = await api("/api/notebooks");
 
-    let welcomeId = null;
+    let welcomeNotebookId = null;
+    let welcomeSectionId = null;
+    let welcomePageId = null;
 
     for (const template of examples) {
-      if (state.uid !== uid) {
-        throw new Error("A conta mudou.");
+      if (state.uid !== uid || !current()) {
+        throw new Error(
+          "A conta foi alterada durante a criação dos exemplos."
+        );
       }
 
       let notebook = notebooks.find(n =>
@@ -1288,7 +1377,7 @@ $("insertExamples").onclick = async () => {
       }
 
       if (template.title === "Pessoal") {
-        welcomeId = notebook.id;
+        welcomeNotebookId = notebook.id;
       }
 
       const { sections } = await api(
@@ -1314,63 +1403,102 @@ $("insertExamples").onclick = async () => {
           sections.push(section);
         }
 
+        if (
+          template.title === "Pessoal" &&
+          group.title === "Primeiros passos"
+        ) {
+          welcomeSectionId = section.id;
+        }
+
         const { pages } = await api(
           "/api/pages?section_id=" +
           encodeURIComponent(section.id)
         );
 
         for (const sample of group.pages) {
-          if (
-            pages.some(
-              p => p.title === sample.title
-            )
-          ) {
-            continue;
+          if (state.uid !== uid || !current()) {
+            throw new Error(
+              "A conta foi alterada durante a criação dos exemplos."
+            );
           }
 
-          const { page } = await api(
-            "/api/pages",
-            "POST",
-            {
-              title: sample.title,
-              section_id: section.id
-            }
+          let page = pages.find(
+            p => p.title === sample.title
           );
 
-          const { page: saved } = await api(
-            "/api/pages/" + page.id,
-            "PATCH",
-            {
-              title: sample.title,
-              content_json: encode(sample.text),
-              updated_at: page.updated_at
-            }
-          );
+          if (!page) {
+            ({ page } = await api(
+              "/api/pages",
+              "POST",
+              {
+                title: sample.title,
+                section_id: section.id
+              }
+            ));
 
-          pages.push(saved);
+            const { page: saved } = await api(
+              "/api/pages/" +
+              encodeURIComponent(page.id),
+              "PATCH",
+              {
+                title: sample.title,
+                content_json: encode(sample.text),
+                updated_at: page.updated_at
+              }
+            );
+
+            page = saved;
+            pages.push(page);
+          }
+
+          if (
+            sample.title ===
+            "Bem-vindo ao Minhas Anotações"
+          ) {
+            welcomePageId = page.id;
+          }
         }
       }
     }
 
-    await loadNotebooks(welcomeId);
+    await loadNotebooks(welcomeNotebookId);
 
-    status("Exemplos criados no banco D1.");
+    if (welcomeSectionId) {
+      await selectSection(
+        welcomeSectionId,
+        true
+      );
+    }
+
+    if (welcomePageId) {
+      await selectPage(welcomePageId);
+    }
+
+    status(
+      "Exemplos criados no D1. " +
+      "Sua página de boas-vindas está pronta."
+    );
+
+    return true;
   } catch (error) {
     status(
       errorText(error) +
-      " Repita a operação para concluir " +
-      "os itens restantes.",
+      " Os itens criados foram preservados. " +
+      "Você pode clicar em Inserir exemplos novamente.",
       true
     );
+
+    return false;
   } finally {
     state.busy = false;
     $("insertExamples").disabled = false;
   }
-};
+}
 
-// ================================================
+$("insertExamples").onclick =
+  () => void insertExampleData();
+
 // INICIALIZAÇÃO DA SESSÃO
-// ================================================
 
 async function enter(user) {
   const generation = ++state.generation;
@@ -1381,7 +1509,6 @@ async function enter(user) {
     user.email || "Conta autenticada";
 
   show("appView");
-
   status("Carregando anotações...");
 
   try {
@@ -1392,6 +1519,26 @@ async function enter(user) {
     }
 
     await loadNotebooks();
+
+    if (generation !== state.generation) {
+      return;
+    }
+
+    // Cria exemplos automaticamente para uma conta vazia.
+    const initialKey =
+      "mynotes-examples-initialized:" + user.uid;
+
+    if (!localStorage.getItem(initialKey)) {
+      if (state.notebooks.length === 0) {
+        const ok = await insertExampleData({
+          automatic: true
+        });
+
+        if (!ok) return;
+      }
+
+      localStorage.setItem(initialKey, "1");
+    }
 
     if (generation === state.generation) {
       status(
@@ -1405,7 +1552,8 @@ async function enter(user) {
   }
 }
 
-// MONITORAR LOGIN FIREBASE
+// MONITORAR O FIREBASE
+
 onAuthStateChanged(auth, async user => {
   ++state.generation;
   ++state.navigation;
@@ -1413,6 +1561,7 @@ onAuthStateChanged(auth, async user => {
   clearTimeout(autosaveTimer);
 
   state.uid = null;
+  state.showGuideEditor = false;
   state.notebooks = [];
   state.sections = [];
   state.pages = [];
@@ -1446,7 +1595,8 @@ onAuthStateChanged(auth, async user => {
   await enter(user);
 });
 
-// LOGOUT
+// SAIR DA CONTA
+
 $("logoutButton").onclick = async () => {
   if (!(await save())) {
     return status(
