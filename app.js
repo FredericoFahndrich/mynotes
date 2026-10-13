@@ -349,29 +349,34 @@ function drawList(containerId, rows, chosen, kind) {
     return;
   }
 
-  const icons = {
-    notebooks: {
-      "Pessoal": "🏠",
-      "Pessoais": "🏠",
-      "Trabalho": "💼",
-      "Estudos": "📚",
-      "Projetos": "💡",
-      "Ideias": "⭐",
-      "Referências": "📄"
-    },
-    sections: {
-      "Primeiros passos": "📋",
-      "Anotações rápidas": "⚡",
-      "Tarefas": "✅",
-      "Planejamento": "📅",
-      "Reuniões": "🗓️",
-      "Conteúdos": "📖",
-      "Ideias": "💡",
-      "Pessoal": "👤",
-      "Saúde": "❤️",
-      "Viagens": "✈️"
-    }
-  };
+  
+const icons = {
+  notebooks: {
+    "Pessoal": "🏠",
+    "Pessoais": "🏠",
+    "Trabalho": "💼",
+    "Estudos": "📚",
+    "Projetos": "💡",
+    "Ideias": "⭐",
+    "Referências": "📄"
+  },
+
+  sections: {
+    "Primeiros passos": "📋",
+    "Anotações rápidas": "⚡",
+    "Tarefas": "✅",
+    "Planejamento": "📅",
+    "Reuniões": "🗓️",
+    "Conteúdos": "📖",
+    "Ideias": "💡",
+    "Pessoal": "👤",
+    "Saúde": "❤️",
+    "Viagens": "✈️",
+    "Rascunhos": "✏️",
+    "Materiais": "📚"
+  }
+};
+
 
   for (const row of rows) {
     const wrap = document.createElement("div");
@@ -1499,8 +1504,8 @@ async function insertExampleData({ automatic = false } = {}) {
   }
 }
 
-$("insertExamples").onclick =
-  () => void insertExampleData();
+//$("insertExamples").onclick =
+  //() => void insertExampleData();
 
 // INICIALIZAÇÃO DA SESSÃO
 
@@ -1529,21 +1534,38 @@ async function enter(user) {
     }
 
     // Cria exemplos automaticamente para uma conta vazia.
-    const initialKey =
-      "mynotes-examples-initialized:" + user.uid;
 
-    if (!localStorage.getItem(initialKey)) {
-      if (state.notebooks.length === 0) {
-        const ok = await insertExampleData({
-          automatic: true
-        });
+// Configuração inicial de cadernos e anotações.
+//
+// Aplica-se às contas novas e também às contas
+// existentes que ainda não receberam esta versão.
+//
+// A função de inserção reutiliza cadernos, seções
+// e anotações existentes, sem sobrescrever conteúdo.
 
-        if (!ok) return;
+    const onboardingKey =
+      "mynotes-default-examples-v2:" + user.uid;
+    
+    if (!localStorage.getItem(onboardingKey)) {
+      const initialized = await insertExampleData({
+        automatic: true
+      });
+    
+      if (!initialized) {
+        // Uma nova tentativa será feita no próximo login.
+        return;
       }
-
-      localStorage.setItem(initialKey, "1");
+    
+      if (
+        generation !== state.generation ||
+        !current()
+      ) {
+        return;
+      }
+    
+      localStorage.setItem(onboardingKey, "completed");
     }
-
+    
     if (generation === state.generation) {
       status(
         "Conectado. Dados privados carregados do D1."
