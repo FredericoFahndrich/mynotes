@@ -731,3 +731,50 @@ $("logoutButton").onclick = async () => {
   if (!(await save())) return status("Salve ou baixe o rascunho antes de sair.", true);
   try { await signOut(auth); } catch (error) { status(errorText(error), true); }
 };
+
+/* Integração da pesquisa com o aplicativo existente */
+
+window.MyNotesBridge = Object.freeze({
+  snapshot() {
+    return {
+      uid: state.uid,
+      notebookId: state.notebookId,
+      sectionId: state.sectionId,
+      pages: state.pages.map(page => ({ ...page }))
+    };
+  },
+
+  request(path) {
+    if (
+      typeof path !== "string" ||
+      !path.startsWith("/api/")
+    ) {
+      throw new Error("Rota de consulta inválida.");
+    }
+
+    return api(path);
+  },
+
+  async openPage({ notebookId, sectionId, pageId }) {
+    if (!state.uid || !(await save())) {
+      return false;
+    }
+
+    if (state.notebookId !== notebookId) {
+      await selectNotebook(notebookId, true);
+    }
+
+    if (state.sectionId !== sectionId) {
+      await selectSection(sectionId, true);
+    }
+
+    if (!state.pages.some(page => page.id === pageId)) {
+      return false;
+    }
+
+    await selectPage(pageId);
+
+    return state.page?.id === pageId;
+  }
+});
+
