@@ -1495,7 +1495,7 @@ async function insertExampleData({ automatic = false } = {}) {
     return false;
   } finally {
     state.busy = false;
-    $("insertExamples").disabled = false;
+    //$("insertExamples").disabled = false;
   }
 }
 
