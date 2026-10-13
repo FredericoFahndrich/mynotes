@@ -1,0 +1,53 @@
+/* Complemento para pesquisa global e filtros no dashboard, sem afetar o login. */
+#appView.dashboard-shell .global-search-box { z-index: 25; }
+#appView.dashboard-shell .mn-search-popover {
+  position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);
+  width:min(540px,calc(100vw - 36px));max-height:min(640px,77vh);
+  display:flex;flex-direction:column;overflow:hidden;
+  border-radius:16px;border:1px solid rgba(255,255,255,.84);
+  background:rgba(247,251,255,.96);backdrop-filter:blur(30px);
+  box-shadow:0 22px 55px rgba(19,61,113,.25);color:#1e293b;
+}
+#appView.dashboard-shell .mn-search-popover[hidden] {display:none !important}
+#appView.dashboard-shell .mn-search-head {display:flex;justify-content:space-between;align-items:center;gap:8px;padding:15px 17px 8px;font-size:14px}
+#appView.dashboard-shell .mn-search-close {border:0;background:rgba(200,219,242,.55);color:#354966;border-radius:8px;width:28px;height:28px;font-size:20px;cursor:pointer}
+#appView.dashboard-shell .mn-filter-controls {display:flex;align-items:end;gap:8px;padding:8px 16px 10px;flex-wrap:wrap;border-bottom:1px solid #dbe7f5}
+#appView.dashboard-shell .mn-filter-controls>label:first-child {display:flex;flex-direction:column;gap:3px;font-size:11px;color:#64748b;flex:1;min-width:125px}
+#appView.dashboard-shell .mn-filter-controls select {font:inherit;font-size:12px;border:1px solid #cfdfef;border-radius:8px;background:#fff;color:#213047;padding:7px 8px;width:100%}
+#appView.dashboard-shell .mn-check-option {display:flex;gap:5px;align-items:center;font-size:12px;color:#344256;white-space:nowrap;min-height:33px;cursor:pointer}
+#appView.dashboard-shell .mn-check-option input {accent-color:#1d63dc}
+#appView.dashboard-shell .mn-search-refresh {background:#e5efff;color:#1d63dc;border:1px solid #cfdef8;border-radius:8px;font-size:12px;min-height:33px;padding:0 10px;cursor:pointer}
+#appView.dashboard-shell .mn-global-hint {padding:8px 16px;color:#64748b;font-size:11px;margin:0}
+#appView.dashboard-shell .mn-search-results {overflow:auto;max-height:370px;padding:4px 10px 10px;min-height:56px}
+#appView.dashboard-shell .mn-result {display:flex;flex-direction:column;align-items:flex-start;width:100%;gap:4px;padding:11px 12px;text-align:left;border:0;border-radius:10px;background:transparent;color:#1d2c45;cursor:pointer;border-bottom:1px solid #e1e9f3}
+#appView.dashboard-shell .mn-result:hover,#appView.dashboard-shell .mn-result:focus-visible {background:#deebff;outline:0}
+#appView.dashboard-shell .mn-result:disabled {opacity:.6;cursor:wait}
+#appView.dashboard-shell .mn-result-heading {display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;font-size:13px}
+#appView.dashboard-shell .mn-result-star {color:#f5b000}
+#appView.dashboard-shell .mn-result-path {font-size:11px;color:#57719a}
+#appView.dashboard-shell .mn-result-preview {font-size:12px;color:#62738b;line-height:1.4;max-width:100%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#appView.dashboard-shell .mn-search-message {font-size:12px;padding:12px 10px;margin:0;color:#6b7e98;text-align:center}
+#appView.dashboard-shell .mn-search-foot {font-size:10px;margin:0;padding:8px 16px;background:rgba(229,239,255,.7);color:#607493}
+#appView.dashboard-shell .mn-section-filters {display:flex;align-items:center;justify-content:space-between;gap:5px;padding:0 10px 12px;color:#4b607e}
+#appView.dashboard-shell .mn-section-tag-wrap {min-width:0;flex:1}
+#appView.dashboard-shell .mn-section-tag {width:100%;max-width:130px;min-width:0;background:rgba(255,255,255,.7);border:1px solid #dae4f3;border-radius:8px;padding:6px 4px;font-size:11px;color:#445c7d}
+#appView.dashboard-shell .mn-section-favorite-wrap {display:flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;white-space:nowrap}
+#appView.dashboard-shell .mn-section-favorite-wrap input {accent-color:#1d63dc;width:13px;height:13px;margin:0}
+#appView.dashboard-shell .mn-favorite-indicator {color:#eeab00;margin-left:3px;font-size:12px}
+#appView.dashboard-shell .mn-filter-empty {font-size:11px;padding:10px;text-align:center;color:#7387a1;margin:0}
+#appView.dashboard-shell .page-item[hidden] {display:none !important}
+#appView.dashboard-shell .sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+body[data-theme=dark] #appView.dashboard-shell .mn-search-popover {background:rgba(14,32,57,.98);border-color:rgba(180,216,255,.32);color:#e8f1ff}
+body[data-theme=dark] #appView.dashboard-shell .mn-result {color:#e6f0ff;border-bottom-color:#284562}
+body[data-theme=dark] #appView.dashboard-shell .mn-result:hover {background:#214e84}
+body[data-theme=dark] #appView.dashboard-shell .mn-result-path,body[data-theme=dark] #appView.dashboard-shell .mn-result-preview,body[data-theme=dark] #appView.dashboard-shell .mn-global-hint {color:#a9c1dc}
+body[data-theme=dark] #appView.dashboard-shell .mn-filter-controls {border-bottom-color:#34506e}
+body[data-theme=dark] #appView.dashboard-shell .mn-filter-controls select,body[data-theme=dark] #appView.dashboard-shell .mn-section-tag {background:#1c3a5b;color:#e8f1ff;border-color:#355c87}
+body[data-theme=dark] #appView.dashboard-shell .mn-check-option,body[data-theme=dark] #appView.dashboard-shell .mn-section-filters {color:#dbeaff}
+body[data-theme=dark] #appView.dashboard-shell .mn-search-foot {background:#152f4e}
+@media(max-width:720px){
+  #appView.dashboard-shell .global-search-box:focus-within {width:min(330px,55vw)}
+  #appView.dashboard-shell .global-search-box:focus-within input {display:block}
+  #appView.dashboard-shell .global-search-box:focus-within kbd {display:none}
+  #appView.dashboard-shell .mn-search-popover {position:fixed;top:66px;left:50%;width:calc(100vw - 20px);max-height:75vh}
+}
