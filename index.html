@@ -4,14 +4,169 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1265e8">
-  <meta name="description" content="Acesse suas anotações com privacidade, de qualquer dispositivo.">
-  <title>Entrar | Minhas Anotações</title>
+  <meta name="description" content="Minhas Anotações: organize cadernos, seções e anotações com acesso privado.">
+  <title>Minhas Anotações</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+/* Estilos originais do editor, incorporados para uso em arquivo único. */
+:root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; min-height: 100vh; color: #172d52;
+  --text: #172d52; --muted: #6982a6; --accent: #276be6;
+  --glass: rgba(247,251,255,.53); --pane: rgba(255,255,255,.23);
+  --border: rgba(255,255,255,.62); --hover: rgba(255,255,255,.36);
+  --selected: rgba(70,139,239,.18); --input: rgba(255,255,255,.50);
+  background: radial-gradient(ellipse at 13% 16%, #f5fbff 1%, transparent 43%),
+    radial-gradient(ellipse at 94% 84%, #83baff 1%, transparent 43%),
+    linear-gradient(137deg,#b4d8fa,#91bdf4 48%,#d7eeff);
+  background-attachment: fixed;
+}
+body[data-theme="dark"] {
+  color-scheme: dark; --text:#e9f2ff; --muted:#9db3d1; --accent:#8bbcff;
+  --glass:rgba(16,32,55,.68); --pane:rgba(6,19,42,.22);
+  --border:rgba(199,225,255,.16); --hover:rgba(160,194,242,.08);
+  --selected:rgba(79,148,240,.24); --input:rgba(160,194,242,.10);
+  color:var(--text);
+  background: radial-gradient(ellipse at 15% 10%, #244f7a, transparent 45%),
+    radial-gradient(ellipse at 90% 90%, #183e71, transparent 44%),
+    linear-gradient(140deg,#0c1c34,#0f294c 60%,#10233a);
+  background-attachment: fixed;
+}
+.app-background { position:fixed; z-index:-1; inset:0; overflow:hidden; pointer-events:none; }
+.app-background::before, .app-background::after {
+  content:""; position:absolute; width:70vw; height:43vw; min-height:350px;
+  border:38px solid rgba(255,255,255,.24); border-radius:50%;
+  filter:blur(30px); transform:rotate(-28deg);
+}
+.app-background::before { left:-25vw; bottom:-27vw; }
+.app-background::after { right:-30vw; top:-22vw; border-color:rgba(69,155,255,.25); }
+button,input,textarea { font:inherit; }
+button { cursor:pointer; }
+button:disabled { opacity:.45; cursor:not-allowed; }
+button:focus-visible,input:focus-visible,textarea:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+/* Janela translúcida sem controles decorativos */
+.app-shell {
+  display:flex; flex-direction:column; position:relative;
+  width:min(1650px,calc(100% - 48px)); height:calc(100vh - 48px); min-height:540px;
+  margin:24px auto; overflow:hidden; border-radius:23px;
+  background:var(--glass); border:1px solid var(--border);
+  box-shadow:0 20px 75px rgba(32,72,125,.19);
+  backdrop-filter:blur(32px) saturate(160%); -webkit-backdrop-filter:blur(32px) saturate(160%);
+}
+.topbar { height:70px; min-height:70px; padding:0 24px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:15px; }
+.brand,.topbar-right { display:flex; align-items:center; gap:13px; }
+.brand-icon { display:grid; place-items:center; width:40px; height:40px; border-radius:12px;
+  background:linear-gradient(135deg,#66b8ff,#2674ed); color:white; font-size:25px; }
+.brand-title { font-size:17px; font-weight:750; letter-spacing:-.3px; }
+.user-email { font-size:12px; color:var(--muted); }
+.icon-btn,.logout-btn,.add-btn,.tool-btn { background:var(--input); border:1px solid var(--border);
+  color:var(--text); border-radius:11px; }
+.icon-btn { width:38px; height:38px; font-size:20px; }
+.logout-btn { height:38px; padding:0 17px; }
+.workspace { flex:1; min-height:0; display:grid;
+  grid-template-columns: minmax(155px,1fr) minmax(155px,1fr) minmax(235px,1.2fr) minmax(380px,3fr); }
+.panel { background:var(--pane); border-right:1px solid var(--border); min-width:0; min-height:0; }
+.panel:last-child { border-right:0; }
+.panel-sidebar,.panel-sections,.panel-pages { display:flex; flex-direction:column; overflow-y:auto; }
+.panel-header { padding:17px 15px 12px; display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.panel-header h2 { text-transform:uppercase; margin:0; letter-spacing:.4px; color:var(--muted); font-size:12px; font-weight:750; }
+.add-btn { width:32px; height:32px; font-size:23px; }
+.list,.pages-list { padding:0 9px; display:flex; flex-direction:column; gap:5px; }
+.list-item,.page-item { display:flex; align-items:center; min-width:0; border-radius:12px; }
+.list-item:hover,.page-item:hover { background:var(--hover); }
+.list-item.active,.page-item.active { background:var(--selected); }
+.row-main { flex:1; min-width:0; display:flex; align-items:center; gap:9px;
+  border:0; background:none; color:var(--text); text-align:left;
+  padding:12px 10px; cursor:pointer; font-size:13px; }
+.row-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:550; }
+.row-name small { display:block; font-size:11px; color:var(--muted); margin-top:5px; font-weight:400; }
+.item-icon { color:var(--accent); font-size:19px; flex:0 0 22px; text-align:center; }
+.item-menu { flex:0 0 auto; background:none; border:0; color:var(--muted); font-size:19px;
+  padding:9px; border-radius:8px; }
+.item-menu:hover { background:var(--hover); }
+.page-item .row-main { align-items:flex-start; }
+.page-item .row-name { white-space:normal; line-height:1.3; }
+.page-item { border-bottom:1px solid var(--border); }
+.sidebar-footer { margin-top:auto; padding:18px 12px; display:grid; gap:9px; }
+.outline-btn,.ghost-btn { text-align:left; border-radius:12px; padding:12px 13px;
+  background:var(--input); color:var(--text); border:1px solid var(--border); font-size:12px; }
+.outline-btn { color:var(--accent); border-color:var(--accent); font-weight:650; }
+.search-box { padding:0 10px 13px; }
+.search-box input { width:100%; padding:12px; background:var(--input); color:var(--text);
+  border:1px solid var(--border); border-radius:12px; outline:0; font-size:12px; }
+.empty-message { padding:12px; color:var(--muted); font-size:12px; line-height:1.5; }
+
+/* Editor e guia */
+.panel-editor { overflow:auto; padding:18px 22px; display:flex; flex-direction:column; }
+.editor-topline { display:flex; justify-content:space-between; align-items:center; min-height:42px; gap:15px; }
+.breadcrumb { color:var(--muted); font-size:12px; }
+.editor-tools { display:flex; gap:8px; }
+.tool-btn { width:34px; height:34px; font-size:18px; }
+.editor-title { color:var(--text); margin:13px 0 18px; font-size:clamp(24px,2.3vw,32px); letter-spacing:-.8px; }
+.welcome-card,.usage-card,.tip-card { border:1px solid var(--border); background:var(--input); border-radius:17px; }
+.welcome-card { padding:22px; display:grid; grid-template-columns:minmax(0,1fr) 100px; gap:15px; }
+.welcome-text h3 { color:var(--accent); margin:0 0 12px; font-size:21px; }
+.welcome-text p { font-size:13px; line-height:1.65; }
+.welcome-illustration { border-radius:16px; display:grid; place-items:center; font-size:55px;
+  background:var(--selected); }
+.usage-section { margin-top:22px; }
+.usage-section h2 { font-size:20px; margin:0 0 13px; }
+.usage-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:11px; }
+.usage-card { padding:15px; min-height:137px; }
+.usage-card h4 { font-size:14px; margin:8px 0; color:var(--text); }
+.usage-card p { color:var(--muted); margin:0; line-height:1.5; font-size:12px; }
+.usage-number { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; font-weight:750; }
+.blue {background:#d8e9ff;color:#206dd7;} .green {background:#d4f7e1;color:#07824d;}
+.orange {background:#ffe6d7;color:#e65c18;} .purple {background:#e8d9ff;color:#7835d3;}
+.pink {background:#ffe1ef;color:#d92a79;} .gold {background:#fff1bd;color:#a87606;}
+.real-editor { display:flex; flex:1; min-height:360px; flex-direction:column; }
+.real-title { margin:20px 0 12px; background:transparent; color:var(--text);
+  font-size:clamp(25px,2.3vw,33px); font-weight:750; letter-spacing:-.6px; border:0; outline:0; }
+.editor-meta { display:flex; justify-content:space-between; gap:14px; border-bottom:1px solid var(--border);
+  padding:0 0 15px; color:var(--muted); font-size:11px; }
+.save-status { color:#238f63; font-weight:700; }
+.real-text { flex:1; min-height:310px; border:0; outline:0; resize:none; background:transparent;
+  padding:22px 0; color:var(--text); font-size:15px; line-height:1.85; }
+.real-footer { display:flex; justify-content:space-between; gap:12px;
+  border-top:1px solid var(--border); padding:13px 0; color:var(--muted); font-size:11px; }
+.status-bar { min-height:30px; padding:7px 19px; background:var(--pane); border-top:1px solid var(--border);
+  color:var(--muted); font-size:12px; }
+.status-bar.error { color:#c94e58; }
+.trash-dialog { width:min(475px,calc(100% - 28px)); padding:24px; border-radius:20px;
+  color:var(--text); background:var(--glass); border:1px solid var(--border);
+  backdrop-filter:blur(30px); box-shadow:0 22px 60px #0b30576a; }
+.trash-dialog::backdrop { background:#0c203874; }
+.trash-heading,.trash-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.trash-heading h2 { margin:0; }
+.trash-heading button,.trash-row button { background:var(--input); border:1px solid var(--border);
+  color:var(--text); padding:8px 12px; border-radius:9px; }
+.trash-row { padding:13px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.trash-dialog p { color:var(--muted); font-size:13px; }
+@media (max-width:1140px) {
+  .workspace { grid-template-columns:170px 170px 230px minmax(360px,1fr); overflow-x:auto; }
+  .usage-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:690px) {
+  .app-shell { width:100%; height:100dvh; min-height:0; margin:0; border-radius:0; }
+  .topbar { padding:0 12px; }
+  .brand-title { font-size:14px; }
+  .user-email { display:none; }
+  .workspace { grid-template-columns:150px 155px 215px minmax(335px,1fr); }
+  .panel-editor { padding:12px 16px; }
+  .usage-grid { grid-template-columns:1fr; }
+  .welcome-card { grid-template-columns:1fr; }
+  .welcome-illustration { display:none; }
+}
+
+/* Nova interface de login 3D, independente do tema escolhido no editor. */
+
     :root {
-      color-scheme: dark;
       font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-synthesis: none;
       -webkit-font-smoothing: antialiased;
@@ -30,6 +185,7 @@
     [hidden] { display: none !important; }
 
     .scene {
+      color-scheme: dark;
       position: relative;
       display: grid;
       min-height: 100svh;
@@ -97,7 +253,7 @@
       backdrop-filter: blur(28px) saturate(1.2);
       text-align: center;
     }
-    .brand-icon {
+    .login-brand-icon {
       display: grid;
       place-items: center;
       width: 62px;
@@ -107,7 +263,7 @@
       background: linear-gradient(135deg, #43a6ff 0%, #1a73f5 56%, #0454d0 100%);
       box-shadow: 0 9px 18px rgba(4, 84, 207, .30), inset 0 1px rgba(255,255,255,.3);
     }
-    .brand-icon svg { width: 39px; height: 42px; filter: drop-shadow(0 3px 3px rgba(0, 65, 139, .15)); }
+    .login-brand-icon svg { width: 39px; height: 42px; filter: drop-shadow(0 3px 3px rgba(0, 65, 139, .15)); }
     .auth-header h1 { margin: 0; font-size: 21px; font-weight: 800; line-height: 1.3; letter-spacing: -.65px; }
     .subtitle { margin: 5px 0 20px; color: rgba(255,255,255,.82); font-size: 12px; line-height: 1.55; }
 
@@ -266,8 +422,8 @@
       .scene { padding-block: 20px; }
       .glass-stage { min-height: 555px; }
       .auth-card { padding-top: 23px; padding-bottom: 20px; }
-      .brand-icon { width: 53px; height: 53px; margin-bottom: 10px; }
-      .brand-icon svg { width: 35px; height: 37px; }
+      .login-brand-icon { width: 53px; height: 53px; margin-bottom: 10px; }
+      .login-brand-icon svg { width: 35px; height: 37px; }
       .subtitle { margin-bottom: 15px; }
       .divider { margin-block: 14px 12px; }
       .field { margin-bottom: 10px; }
@@ -276,10 +432,30 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
+  
+/* Estado da página de login (isolado do tema do editor). */
+.scene { --radius-card:23px; --white:#fff; --text-muted:rgba(255,255,255,.79); color-scheme:dark; }
+.scene .login-brand-icon { display:grid; place-items:center; width:62px; height:62px; margin:0 auto 13px; border-radius:17px;
+  background:linear-gradient(135deg,#43a6ff 0%,#1a73f5 56%,#0454d0 100%);
+  box-shadow:0 9px 18px rgba(4,84,207,.3),inset 0 1px rgba(255,255,255,.3); }
+.scene .login-brand-icon svg {width:39px;height:42px;filter:drop-shadow(0 3px 3px rgba(0,65,139,.15));}
+.scene .auth-card h1 {font-size:21px;margin:0 0 10px;line-height:1.3;letter-spacing:-.5px;}
+.scene .verify-card .form-description {margin:12px 0 20px;}
+.scene .verify-card .secondary-auth-button {margin-top:12px;}
+.scene .verify-exit {margin-top:18px;}
+.scene .verify-stage {min-height:min(615px,calc(100svh - 40px));}
+.scene .verify-card .message:empty {display:none;}
+#authError:empty {display:none;}
+/* Evita que fundo decorativo do editor apareça sobre a tela de login. */
+#appView[hidden] ~ * { }
+@media (max-width:720px) {
+  .scene .login-brand-icon {width:56px;height:56px;}
+  .scene .login-brand-icon svg {width:35px;height:38px;}
+}
   </style>
 </head>
 <body>
-  <main class="scene">
+  <main id="loginView" class="scene auth-screen">
     <!-- Esculturas vetoriais decorativas: não dependem de imagens externas. -->
     <svg class="sculptures" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
       <defs>
@@ -346,7 +522,7 @@
     <section class="glass-stage" aria-label="Acesso ao aplicativo">
       <div class="auth-card">
         <header class="auth-header">
-          <div class="brand-icon" aria-hidden="true">
+          <div class="login-brand-icon" aria-hidden="true">
             <svg viewBox="0 0 44 48" fill="none">
               <path d="M11 4h17l10 11v25a4 4 0 0 1-4 4H11a5 5 0 0 1-5-5V9a5 5 0 0 1 5-5Z" fill="#E8F7FF"/>
               <path d="M28 4v8a4 4 0 0 0 4 4h6" fill="#A5D6FF"/>
@@ -383,7 +559,7 @@
                 <input id="login-password" type="password" name="password" placeholder="Digite sua senha" autocomplete="current-password" required>
                 <button class="toggle-password" type="button" aria-controls="login-password" aria-label="Mostrar senha" aria-pressed="false">
                   <svg class="eye" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"/></svg>
-                  <svg class="eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 3 18 18M10.6 6.6A10.2 10.2 0 0 1 12 6.5c6 0 9.5 5.5 9.5 5.5 2.5 12 2.5 12S6 17.5 12 17.5c1.1 0 2.2-.2 3.1-.6M10.2 10.2a2.6 2.6 0 0 0 3.6 3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <svg class="eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 3 18 18M10.6 6.6A10.2 10.2 0 0 1 12 6.5c6 0 9.5 5.5 9.5 5.5a16.8 16.8 0 0 1-3.2 3.4M6.5 6.9C4 8.6 2.5 12 2.5 12S6 17.5 12 17.5c1.1 0 2.2-.2 3.1-.6M10.2 10.2a2.6 2.6 0 0 0 3.6 3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
               </div>
             </div>
@@ -444,7 +620,7 @@
           <div class="inline-links"><button type="button" class="text-link" data-go="login">Voltar para o login</button></div>
         </section>
 
-        <p class="message" id="auth-message" role="status" aria-live="polite" hidden></p>
+        <p class="message" id="authError" role="status" aria-live="polite" hidden></p>
         <p class="privacy-note">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 18h11a4 4 0 0 0 .6-7.95A6.5 6.5 0 0 0 6.15 9.1 4.5 4.5 0 0 0 7 18Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
           Seus dados são privados e sincronizados na nuvem.
@@ -452,106 +628,1743 @@
       </div>
     </section>
   </main>
+  <!-- Confirmação obrigatória para contas cadastradas com e-mail. -->
+  <main id="verifyView" class="scene auth-screen" hidden>
+    <section class="glass-stage verify-stage" aria-labelledby="verifyTitle">
+      <div class="auth-card verify-card">
+        <div class="login-brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 44 48" fill="none"><path d="M11 4h17l10 11v25a4 4 0 0 1-4 4H11a5 5 0 0 1-5-5V9a5 5 0 0 1 5-5Z" fill="#E8F7FF"/><path d="M28 4v8a4 4 0 0 0 4 4h6" fill="#A5D6FF"/><path d="M13 24h18M13 30h18M13 36h12" stroke="#66B2F5" stroke-linecap="round" stroke-width="2.8"/></svg>
+        </div>
+        <h1 id="verifyTitle">Confirme seu e-mail</h1>
+        <p class="form-description">Enviamos uma mensagem de verificação para seu endereço. Confirme o e-mail e depois clique em <strong>Já confirmei</strong>.</p>
+        <button class="submit-button" id="verifyAgain" type="button">Já confirmei</button>
+        <button class="google-button secondary-auth-button" id="verifyResend" type="button">Reenviar e-mail</button>
+        <button class="text-link verify-exit" id="verifyExit" type="button">Sair da conta</button>
+        <p id="verifyMessage" class="message" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
 
-  <script>
-    'use strict';
+  <!-- Área interna existente. Seus dados continuam na API Cloudflare D1. -->
+  <div class="app-background" aria-hidden="true"></div>
+  <main id="appView" class="app-shell" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">▤</div>
+        <div>
+          <div class="brand-title">Minhas Anotações</div>
+          <div class="user-email" id="accountEmail"></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema" aria-label="Alternar tema">☾</button>
+        <button id="logoutButton" class="logout-btn" type="button">Sair</button>
+      </div>
+    </header>
 
-    // Integração: disponibilize window.MinhasAnotacoesAuth no script de
-    // autenticação do seu projeto antes de executar uma ação de login.
-    // Métodos esperados (todos assíncronos):
-    // loginWithEmail(email, password)
-    // loginWithGoogle()
-    // registerWithEmail(email, password)
-    // resetPassword(email)
-    // Cada método deve estabelecer a sessão ou lançar Error quando falhar.
-    const views = [...document.querySelectorAll('.auth-view')];
-    const message = document.getElementById('auth-message');
-    const subtitle = document.querySelector('.subtitle');
-    const subtitles = {
-      login: 'Organize suas ideias com privacidade.',
-      register: 'Comece a organizar suas ideias.',
-      recover: 'Recupere o acesso às suas anotações.'
+    <div class="workspace">
+      <aside class="panel panel-sidebar" aria-labelledby="notebooksHeading">
+        <div class="panel-header">
+          <h2 id="notebooksHeading">Cadernos</h2>
+          <button id="newNotebook" class="add-btn" type="button" title="Criar caderno" aria-label="Criar caderno">+</button>
+        </div>
+        <div id="notebooksList" class="list"></div>
+        <div class="sidebar-footer">
+          <button id="openTrash" class="ghost-btn" type="button">Lixeira</button>
+        </div>
+      </aside>
+
+      <section class="panel panel-sections" aria-labelledby="sectionsHeading">
+        <div class="panel-header">
+          <h2 id="sectionsHeading">Seções</h2>
+          <button id="newSection" class="add-btn" type="button" title="Criar seção" aria-label="Criar seção" disabled>+</button>
+        </div>
+        <div id="sectionsList" class="list"></div>
+      </section>
+
+      <section class="panel panel-pages" aria-labelledby="pagesHeading">
+        <div class="panel-header">
+          <h2 id="pagesHeading">Anotações</h2>
+          <button id="newPage" class="add-btn" type="button" title="Criar anotação" aria-label="Criar anotação" disabled>+</button>
+        </div>
+        <div class="search-box"><input id="searchInput" type="search" aria-label="Pesquisar anotações" placeholder="Pesquisar anotações..."></div>
+        <div id="pagesList" class="pages-list"></div>
+      </section>
+
+      <section class="panel panel-editor" aria-label="Conteúdo da anotação">
+        <div class="editor-topline">
+          <span id="breadcrumb" class="breadcrumb">Meu espaço pessoal</span>
+          <div class="editor-tools">
+            <button id="saveButton" class="tool-btn" type="button" title="Salvar anotação" aria-label="Salvar anotação" disabled>↥</button>
+            <button id="downloadButton" class="tool-btn" type="button" title="Baixar anotação TXT" aria-label="Baixar anotação" disabled>↓</button>
+          </div>
+        </div>
+        <div id="welcomeView">
+          <h1 class="editor-title">Bem-vindo ao Minhas Anotações</h1>
+          <div class="welcome-card">
+            <div class="welcome-text">
+              <h3>Seu espaço pessoal de anotações</h3>
+              <p>Organize suas ideias em cadernos, seções e páginas. Cada conta tem acesso somente às próprias informações.</p>
+              <p>Selecione uma anotação para começar ou use os botões + para adicionar conteúdo.</p>
+              <button id="editWelcomeButton" class="outline-btn" type="button" hidden>Editar esta anotação</button>
+            </div>
+            <div class="welcome-illustration" aria-hidden="true">📝</div>
+          </div>
+          <section class="usage-section" aria-labelledby="usageTitle">
+            <h2 id="usageTitle">Como utilizar</h2>
+            <div class="usage-grid">
+              <div class="usage-card"><span class="usage-number blue">1</span><h4>Cadernos</h4><p>Separe assuntos como Pessoal, Trabalho e Estudos.</p></div>
+              <div class="usage-card"><span class="usage-number green">2</span><h4>Seções</h4><p>Organize os temas dentro de cada caderno.</p></div>
+              <div class="usage-card"><span class="usage-number orange">3</span><h4>Anotações</h4><p>Crie páginas, edite e salve automaticamente.</p></div>
+              <div class="usage-card"><span class="usage-number purple">4</span><h4>Pesquisa</h4><p>Encontre títulos e conteúdos rapidamente.</p></div>
+              <div class="usage-card"><span class="usage-number pink">5</span><h4>Exportação</h4><p>Baixe suas anotações em formato TXT.</p></div>
+              <div class="usage-card"><span class="usage-number gold">6</span><h4>Lixeira</h4><p>Restaure cadernos, seções ou anotações removidas.</p></div>
+            </div>
+          </section>
+        </div>
+        <div id="editorView" class="real-editor" hidden>
+          <input id="pageTitle" class="real-title" type="text" aria-label="Título da anotação" maxlength="100">
+          <div class="editor-meta"><span id="updatedAt"></span><span id="saveState" class="save-status">✓ Salvo</span></div>
+          <textarea id="pageText" class="real-text" spellcheck="true" aria-label="Texto da anotação" placeholder="Comece a escrever..."></textarea>
+          <div class="real-footer"><span>Salvamento automático</span><span>Ctrl / ⌘ + S</span></div>
+        </div>
+      </section>
+    </div>
+    <div id="statusBar" class="status-bar" role="status" aria-live="polite">Preparando seu espaço...</div>
+  </main>
+
+  <dialog id="trashDialog" class="trash-dialog" aria-labelledby="trashHeading">
+    <div class="trash-heading">
+      <h2 id="trashHeading">Lixeira</h2>
+      <button id="closeTrash" type="button" aria-label="Fechar lixeira">✕</button>
+    </div>
+    <p>Itens excluídos podem ser restaurados.</p>
+    <div id="trashList"></div>
+  </dialog>
+
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  sendEmailVerification, sendPasswordResetEmail, reload, signOut
+} from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+
+const API_URL = "https://mynotes-backend.frederico-fahndrich.workers.dev";
+
+const firebase = initializeApp({
+  apiKey: "AIzaSyAQn6YlOwkgHOLXs272-tcwMl1YP_SScwA",
+  authDomain: "mynotes-auth-af57d.firebaseapp.com",
+  projectId: "mynotes-auth-af57d",
+  storageBucket: "mynotes-auth-af57d.firebasestorage.app",
+  messagingSenderId: "214313205677",
+  appId: "1:214313205677:web:69ae3d0eb37506cb492b24"
+});
+
+const auth = getAuth(firebase);
+const $ = id => document.getElementById(id);
+
+const state = {
+  uid: null,
+  generation: 0,
+  navigation: 0,
+  notebooks: [],
+  sections: [],
+  pages: [],
+  notebookId: null,
+  sectionId: null,
+  page: null,
+  dirty: false,
+  saving: null,
+  busy: false,
+  showGuideEditor: false
+};
+
+let autosaveTimer = null;
+
+// INTERFACE
+
+function show(view) {
+  for (const id of ["loginView", "verifyView", "appView"]) {
+    $(id).hidden = id !== view;
+  }
+}
+
+function status(text, error = false) {
+  $("statusBar").textContent = text;
+  $("statusBar").classList.toggle("error", error);
+}
+
+function authMessage(text, error = false) {
+  const element = $('authError');
+  element.textContent = text;
+  element.dataset.kind = error ? 'error' : 'info';
+  element.hidden = !text;
+}
+
+function errorText(error) {
+  const codes = {
+    "auth/invalid-credential": "E-mail ou senha incorretos.",
+    "auth/email-already-in-use": "E-mail já cadastrado.",
+    "auth/weak-password": "Escolha uma senha mais forte.",
+    "auth/unauthorized-domain": "Autorize o domínio github.io no Firebase.",
+    "auth/popup-closed-by-user": "Login Google cancelado.",
+    "auth/too-many-requests": "Muitas tentativas. Aguarde alguns minutos."
+  };
+
+  return codes[error?.code] ||
+    error?.message ||
+    "Operação não concluída.";
+}
+
+function current() {
+  return Boolean(
+    state.uid &&
+    auth.currentUser?.uid === state.uid
+  );
+}
+
+// TEMA
+
+function theme(value) {
+  document.body.dataset.theme = value;
+  localStorage.setItem("mynotes-theme", value);
+  $("themeToggle").textContent =
+    value === "dark" ? "☀" : "☾";
+}
+
+theme(
+  localStorage.getItem("mynotes-theme") === "dark"
+    ? "dark"
+    : "light"
+);
+
+$("themeToggle").onclick = () => {
+  theme(
+    document.body.dataset.theme === "dark"
+      ? "light"
+      : "dark"
+  );
+};
+
+// API CLOUDFLARE
+
+async function api(path, method = "GET", body) {
+  const user = auth.currentUser;
+
+  if (!user || !state.uid || user.uid !== state.uid) {
+    throw new Error("Sessão encerrada.");
+  }
+
+  const token = await user.getIdToken();
+
+  const response = await fetch(API_URL + path, {
+    method,
+    cache: "no-store",
+    headers: {
+      Authorization: "Bearer " + token,
+      ...(body === undefined
+        ? {}
+        : { "Content-Type": "application/json" })
+    },
+    ...(body === undefined
+      ? {}
+      : { body: JSON.stringify(body) })
+  });
+
+  if (!current()) {
+    throw new Error(
+      "A conta foi alterada. Entre novamente."
+    );
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      data.error || `Erro HTTP ${response.status}`
+    );
+  }
+
+  return data;
+}
+
+// LOGIN FIREBASE + TELAS DE CADASTRO E RECUPERAÇÃO
+
+const authViews = [...document.querySelectorAll('#loginView .auth-view')];
+const subtitle = document.querySelector('#loginView .subtitle');
+const authSubtitles = {
+  login: 'Organize suas ideias com privacidade.',
+  register: 'Comece a organizar suas ideias.',
+  recover: 'Recupere o acesso às suas anotações.'
+};
+
+function switchAuthView(viewName) {
+  for (const view of authViews) view.hidden = view.dataset.view !== viewName;
+  subtitle.textContent = authSubtitles[viewName];
+  authMessage('');
+  const first = document.querySelector(`#loginView .auth-view[data-view="${viewName}"] input`);
+  first?.focus({ preventScroll: true });
+}
+
+document.querySelectorAll('#loginView [data-go]').forEach(button => {
+  button.addEventListener('click', () => {
+    const target = button.dataset.go;
+    if (target === 'register') $('register-email').value = $('login-email').value;
+    if (target === 'recover') $('recover-email').value = $('login-email').value;
+    switchAuthView(target);
+  });
+});
+
+document.querySelectorAll('#loginView .toggle-password').forEach(button => {
+  button.addEventListener('click', () => {
+    const input = document.getElementById(button.getAttribute('aria-controls'));
+    const showing = input.type === 'password';
+    input.type = showing ? 'text' : 'password';
+    button.setAttribute('aria-pressed', String(showing));
+    button.setAttribute('aria-label', showing ? 'Ocultar senha' : 'Mostrar senha');
+    input.focus({ preventScroll: true });
+  });
+});
+
+$('login-form').onsubmit = async event => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector('[type="submit"]');
+  button.disabled = true;
+  authMessage('Aguarde...');
+  try {
+    await signInWithEmailAndPassword(auth, $('login-email').value.trim(), $('login-password').value);
+    authMessage('');
+  } catch (error) {
+    authMessage(errorText(error), true);
+  } finally {
+    button.disabled = false;
+  }
+};
+
+$('google-login').onclick = async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  authMessage('Aguarde...');
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+    authMessage('');
+  } catch (error) {
+    authMessage(errorText(error), true);
+  } finally {
+    button.disabled = false;
+  }
+};
+
+const registerPassword = $('register-password');
+const registerConfirm = $('register-confirm');
+function validateConfirmation() {
+  registerConfirm.setCustomValidity(
+    registerConfirm.value !== registerPassword.value ? 'As senhas não coincidem.' : ''
+  );
+}
+registerPassword.addEventListener('input', validateConfirmation);
+registerConfirm.addEventListener('input', validateConfirmation);
+$('register-form').onsubmit = async event => {
+  event.preventDefault();
+  validateConfirmation();
+  if (!event.currentTarget.reportValidity()) return;
+  const button = event.currentTarget.querySelector('[type="submit"]');
+  button.disabled = true;
+  authMessage('Criando sua conta...');
+  try {
+    const result = await createUserWithEmailAndPassword(
+      auth, $('register-email').value.trim(), registerPassword.value
+    );
+    await sendEmailVerification(result.user);
+    authMessage('Verificação enviada. Confirme seu e-mail para começar.');
+  } catch (error) {
+    authMessage(errorText(error), true);
+  } finally {
+    button.disabled = false;
+  }
+};
+
+$('recover-form').onsubmit = async event => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector('[type="submit"]');
+  button.disabled = true;
+  authMessage('Enviando instruções...');
+  try {
+    await sendPasswordResetEmail(auth, $('recover-email').value.trim());
+    authMessage('Se a conta existir, você receberá instruções por e-mail.');
+  } catch (error) {
+    authMessage(errorText(error), true);
+  } finally {
+    button.disabled = false;
+  }
+};
+
+$('verifyAgain').onclick = async () => {
+  try {
+    const user = auth.currentUser;
+    if (!user) return show('loginView');
+    await reload(user);
+    await user.getIdToken(true);
+    if (!user.emailVerified) throw new Error('Seu e-mail ainda não foi confirmado.');
+    await enter(user);
+  } catch (error) {
+    $('verifyMessage').textContent = errorText(error);
+  }
+};
+
+$('verifyResend').onclick = async () => {
+  try {
+    if (!auth.currentUser) throw new Error('Faça login novamente.');
+    await sendEmailVerification(auth.currentUser);
+    $('verifyMessage').textContent = 'Mensagem reenviada.';
+  } catch (error) {
+    $('verifyMessage').textContent = errorText(error);
+  }
+};
+
+$('verifyExit').onclick = () => signOut(auth);
+
+// CONTEÚDO DAS ANOTAÇÕES
+
+function decode(content) {
+  try {
+    const doc = JSON.parse(content || "{}");
+
+    if (
+      doc.type === "mynotes-text" &&
+      doc.version === 1 &&
+      typeof doc.text === "string"
+    ) {
+      return {
+        text: doc.text,
+        editable: true
+      };
+    }
+
+    if (
+      doc.type === "doc" &&
+      Array.isArray(doc.content) &&
+      doc.content.length === 0
+    ) {
+      return {
+        text: "",
+        editable: true
+      };
+    }
+
+    return {
+      text: JSON.stringify(doc, null, 2),
+      editable: false
+    };
+  } catch {
+    return {
+      text: String(content),
+      editable: false
+    };
+  }
+}
+
+const encode = text => JSON.stringify({
+  type: "mynotes-text",
+  version: 1,
+  text
+});
+
+function date(value) {
+  const d = new Date(value);
+
+  return Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleString("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short"
+      });
+}
+
+// LISTAS
+
+function empty(container, label) {
+  const p = document.createElement("p");
+  p.className = "empty-message";
+  p.textContent = label;
+  container.replaceChildren(p);
+}
+
+function drawList(containerId, rows, chosen, kind) {
+  const container = $(containerId);
+  container.replaceChildren();
+
+  if (!rows.length) {
+    empty(
+      container,
+      kind === "notebooks"
+        ? "Crie um caderno com +."
+        : kind === "sections"
+          ? "Selecione um caderno e crie uma seção."
+          : "Selecione uma seção e crie sua primeira anotação."
+    );
+    return;
+  }
+
+  const icons = {
+    notebooks: {
+      "Pessoal": "🏠",
+      "Pessoais": "🏠",
+      "Trabalho": "💼",
+      "Estudos": "📚",
+      "Projetos": "💡",
+      "Ideias": "⭐",
+      "Referências": "📄"
+    },
+    sections: {
+      "Primeiros passos": "📋",
+      "Anotações rápidas": "⚡",
+      "Tarefas": "✅",
+      "Planejamento": "📅",
+      "Reuniões": "🗓️",
+      "Conteúdos": "📖",
+      "Ideias": "💡",
+      "Pessoal": "👤",
+      "Saúde": "❤️",
+      "Viagens": "✈️"
+    }
+  };
+
+  for (const row of rows) {
+    const wrap = document.createElement("div");
+
+    wrap.className =
+      (kind === "pages" ? "page-item" : "list-item") +
+      (row.id === chosen ? " active" : "");
+
+    const button = document.createElement("button");
+    button.className = "row-main";
+    button.type = "button";
+
+    const icon = document.createElement("span");
+    icon.className = "item-icon";
+    icon.textContent = kind === "pages"
+      ? "▤"
+      : (icons[kind][row.title] || "▣");
+
+    const label = document.createElement("span");
+    label.className = "row-name";
+    label.textContent = row.title;
+
+    button.append(icon, label);
+
+    if (kind === "pages") {
+      const caption = document.createElement("small");
+      caption.textContent = date(row.updated_at);
+      label.append(caption);
+    }
+
+    button.onclick = () => {
+      if (kind === "notebooks") {
+        void selectNotebook(row.id);
+      } else if (kind === "sections") {
+        void selectSection(row.id);
+      } else {
+        void selectPage(row.id);
+      }
     };
 
-    function showMessage(text, kind = 'info') {
-      message.textContent = text;
-      message.dataset.kind = kind;
-      message.hidden = false;
+    const menu = document.createElement("button");
+    menu.type = "button";
+    menu.className = "item-menu action-menu";
+    menu.textContent = "⋮";
+    menu.title = "Renomear ou excluir";
+
+    menu.setAttribute(
+      "aria-label",
+      `Opções de ${row.title}`
+    );
+
+    menu.onclick = () => void itemMenu(kind, row);
+
+    wrap.append(button, menu);
+    container.append(wrap);
+  }
+}
+
+function draw() {
+  drawList(
+    "notebooksList",
+    state.notebooks,
+    state.notebookId,
+    "notebooks"
+  );
+
+  drawList(
+    "sectionsList",
+    state.sections,
+    state.sectionId,
+    "sections"
+  );
+
+  const search = $("searchInput")
+    .value.toLocaleLowerCase("pt-BR");
+
+  const results = state.pages.filter(page =>
+    (
+      page.title + " " +
+      decode(page.content_json).text
+    )
+      .toLocaleLowerCase("pt-BR")
+      .includes(search)
+  );
+
+  drawList(
+    "pagesList",
+    results,
+    state.page?.id,
+    "pages"
+  );
+
+  $("newSection").disabled = !state.notebookId;
+  $("newPage").disabled = !state.sectionId;
+
+  $("saveButton").disabled =
+    !state.page ||
+    !decode(state.page.content_json).editable;
+
+  $("downloadButton").disabled = !state.page;
+}
+
+// EDITOR E GUIA DE BOAS-VINDAS
+
+function drawEditor() {
+  const page = state.page;
+
+  const isDefaultGuide = Boolean(
+    page &&
+    page.title === "Bem-vindo ao Minhas Anotações" &&
+    decode(page.content_json).text ===
+      examples[0].sections[0].pages[0].text
+  );
+
+  const showGuide =
+    !page ||
+    (isDefaultGuide && !state.showGuideEditor);
+
+  $("welcomeView").hidden = !showGuide;
+  $("editorView").hidden = showGuide;
+  $("editWelcomeButton").hidden = !isDefaultGuide;
+
+  if (!page) {
+    $("breadcrumb").textContent =
+      "Meu espaço pessoal";
+    return;
+  }
+
+  const content = decode(page.content_json);
+
+  $("pageTitle").value = page.title;
+  $("pageText").value = content.text;
+
+  $("pageTitle").readOnly = !content.editable;
+  $("pageText").readOnly = !content.editable;
+
+  $("saveState").textContent =
+    content.editable ? "✓ Salvo" : "Somente leitura";
+
+  $("updatedAt").textContent =
+    "Atualizado: " + date(page.updated_at);
+
+  $("breadcrumb").textContent = [
+    state.notebooks.find(
+      n => n.id === state.notebookId
+    )?.title,
+    state.sections.find(
+      s => s.id === state.sectionId
+    )?.title
+  ]
+    .filter(Boolean)
+    .join(" / ");
+
+  state.dirty = false;
+}
+
+$("editWelcomeButton").onclick = () => {
+  if (!state.page) return;
+
+  state.showGuideEditor = true;
+  drawEditor();
+  $("pageText").focus();
+};
+
+function updateDirty() {
+  if (
+    !state.page ||
+    !decode(state.page.content_json).editable
+  ) {
+    return;
+  }
+
+  const old = decode(state.page.content_json);
+
+  state.dirty =
+    $("pageTitle").value !== state.page.title ||
+    $("pageText").value !== old.text;
+
+  $("saveState").textContent =
+    state.dirty ? "● Não salvo" : "✓ Salvo";
+
+  clearTimeout(autosaveTimer);
+
+  if (state.dirty) {
+    autosaveTimer = setTimeout(
+      () => void save(),
+      1300
+    );
+  }
+}
+
+$("pageTitle").oninput = updateDirty;
+$("pageText").oninput = updateDirty;
+
+// SALVAMENTO AUTOMÁTICO NO D1
+
+async function save() {
+  clearTimeout(autosaveTimer);
+
+  if (state.saving) {
+    try {
+      await state.saving;
+    } catch {
+      return false;
     }
 
-    function navigate(viewName) {
-      views.forEach(view => { view.hidden = view.dataset.view !== viewName; });
-      subtitle.textContent = subtitles[viewName];
-      message.hidden = true;
-      const firstInput = document.querySelector(`.auth-view[data-view="${viewName}"] input`);
-      firstInput?.focus({ preventScroll: true });
+    return state.dirty ? save() : true;
+  }
+
+  if (!state.dirty || !state.page) {
+    return true;
+  }
+
+  const page = state.page;
+  const title = $("pageTitle").value.trim();
+  const text = $("pageText").value;
+
+  if (!title || title.length > 100) {
+    status(
+      "O título deve ter entre 1 e 100 caracteres.",
+      true
+    );
+    return false;
+  }
+
+  $("saveState").textContent = "Salvando...";
+
+  const task = api(
+    `/api/pages/${encodeURIComponent(page.id)}`,
+    "PATCH",
+    {
+      title,
+      content_json: encode(text),
+      updated_at: page.updated_at
+    }
+  );
+
+  state.saving = task;
+
+  try {
+    const data = await task;
+
+    if (state.page?.id !== page.id) {
+      return false;
     }
 
-    document.querySelectorAll('[data-go]').forEach(button => {
-      button.addEventListener('click', () => navigate(button.dataset.go));
-    });
+    state.page = data.page;
 
-    document.querySelectorAll('.toggle-password').forEach(button => {
-      button.addEventListener('click', () => {
-        const field = document.getElementById(button.getAttribute('aria-controls'));
-        const showing = field.type === 'password';
-        field.type = showing ? 'text' : 'password';
-        button.setAttribute('aria-pressed', String(showing));
-        button.setAttribute('aria-label', showing ? 'Ocultar senha' : 'Mostrar senha');
-        field.focus({ preventScroll: true });
-      });
-    });
+    state.pages = state.pages.map(p =>
+      p.id === data.page.id ? data.page : p
+    );
 
-    async function performAuth(method, args, submitButton, successText) {
-      const auth = window.MinhasAnotacoesAuth;
-      if (!auth || typeof auth[method] !== 'function') {
-        showMessage('Interface pronta. A autenticação precisa ser conectada ao serviço do aplicativo.');
-        return;
+    const saved = decode(data.page.content_json).text;
+
+    state.dirty =
+      $("pageTitle").value !== data.page.title ||
+      $("pageText").value !== saved;
+
+    $("updatedAt").textContent =
+      "Atualizado: " + date(data.page.updated_at);
+
+    $("saveState").textContent =
+      state.dirty ? "● Não salvo" : "✓ Salvo";
+
+    draw();
+
+    if (state.dirty) {
+      autosaveTimer = setTimeout(
+        () => void save(),
+        700
+      );
+    } else {
+      status("Anotação salva no D1.");
+    }
+
+    return true;
+  } catch (error) {
+    $("saveState").textContent = "Erro ao salvar";
+
+    status(
+      errorText(error) +
+      " Seu texto permanece na tela. " +
+      "Baixe-o antes de sair ou atualizar.",
+      true
+    );
+
+    return false;
+  } finally {
+    if (state.saving === task) {
+      state.saving = null;
+    }
+  }
+}
+
+$("saveButton").onclick = () => void save();
+
+// DOWNLOAD DA ANOTAÇÃO
+
+$("downloadButton").onclick = () => {
+  if (!state.page) return;
+
+  const blob = new Blob(
+    [
+      $("pageTitle").value +
+      "\n\n" +
+      $("pageText").value
+    ],
+    {
+      type: "text/plain;charset=utf-8"
+    }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "anotacao.txt";
+  a.click();
+
+  setTimeout(
+    () => URL.revokeObjectURL(url),
+    1000
+  );
+};
+
+// ATALHO CTRL/COMMAND + S
+
+document.addEventListener("keydown", event => {
+  if (
+    (event.ctrlKey || event.metaKey) &&
+    event.key.toLowerCase() === "s"
+  ) {
+    event.preventDefault();
+    void save();
+  }
+});
+
+window.addEventListener("beforeunload", event => {
+  if (state.dirty || state.saving) {
+    event.preventDefault();
+  }
+});
+
+// CARREGAMENTO DE CADERNOS
+
+async function loadNotebooks(preferred = null) {
+  const response = await api("/api/notebooks");
+
+  state.notebooks = response.notebooks;
+
+  const id = state.notebooks.find(
+    n => n.id === preferred
+  )?.id || state.notebooks[0]?.id || null;
+
+  await selectNotebook(id, true);
+}
+
+// SELEÇÃO DE CADERNO
+
+async function selectNotebook(id, skipSave = false) {
+  if (!skipSave && !(await save())) return;
+
+  const generation = state.generation;
+  const nav = ++state.navigation;
+
+  state.showGuideEditor = false;
+  state.notebookId = id;
+  state.sectionId = null;
+  state.page = null;
+  state.sections = [];
+  state.pages = [];
+
+  draw();
+  drawEditor();
+
+  if (!id) return;
+
+  try {
+    const result = await api(
+      "/api/sections?notebook_id=" +
+      encodeURIComponent(id)
+    );
+
+    if (
+      generation !== state.generation ||
+      nav !== state.navigation
+    ) {
+      return;
+    }
+
+    state.sections = result.sections;
+    draw();
+
+    await selectSection(
+      state.sections[0]?.id || null,
+      true
+    );
+  } catch (error) {
+    if (generation === state.generation) {
+      status(errorText(error), true);
+    }
+  }
+}
+
+// SELEÇÃO DE SEÇÃO
+
+async function selectSection(id, skipSave = false) {
+  if (!skipSave && !(await save())) return;
+
+  const generation = state.generation;
+  const nav = ++state.navigation;
+
+  state.showGuideEditor = false;
+  state.sectionId = id;
+  state.page = null;
+  state.pages = [];
+
+  draw();
+  drawEditor();
+
+  if (!id) return;
+
+  try {
+    const result = await api(
+      "/api/pages?section_id=" +
+      encodeURIComponent(id)
+    );
+
+    if (
+      generation !== state.generation ||
+      nav !== state.navigation
+    ) {
+      return;
+    }
+
+    state.pages = result.pages;
+    state.page = state.pages[0] || null;
+
+    draw();
+    drawEditor();
+  } catch (error) {
+    if (generation === state.generation) {
+      status(errorText(error), true);
+    }
+  }
+}
+
+// SELEÇÃO DE ANOTAÇÃO
+
+async function selectPage(id) {
+  if (
+    state.page?.id === id ||
+    !(await save())
+  ) {
+    return;
+  }
+
+  state.showGuideEditor = false;
+
+  state.page = state.pages.find(
+    p => p.id === id
+  ) || null;
+
+  draw();
+  drawEditor();
+}
+
+// RECARREGAR SEÇÕES
+
+async function refreshSections(preferred) {
+  const result = await api(
+    "/api/sections?notebook_id=" +
+    encodeURIComponent(state.notebookId)
+  );
+
+  state.sections = result.sections;
+
+  await selectSection(
+    state.sections.find(
+      s => s.id === preferred
+    )?.id || state.sections[0]?.id || null,
+    true
+  );
+}
+
+// RECARREGAR ANOTAÇÕES
+
+async function refreshPages(preferred) {
+  const result = await api(
+    "/api/pages?section_id=" +
+    encodeURIComponent(state.sectionId)
+  );
+
+  state.pages = result.pages;
+  state.showGuideEditor = false;
+
+  state.page = state.pages.find(
+    p => p.id === preferred
+  ) || state.pages[0] || null;
+
+  draw();
+  drawEditor();
+}
+
+// CRIAR, RENOMEAR E EXCLUIR
+
+async function changeItem(kind, operation, row = null) {
+  if (state.busy || !(await save())) return;
+
+  let title = "";
+
+  if (operation === "delete") {
+    if (
+      !confirm(
+        `Mover "${row.title}" para a lixeira?`
+      )
+    ) {
+      return;
+    }
+  } else {
+    const response = prompt(
+      operation === "create"
+        ? "Nome do novo item:"
+        : "Novo nome:",
+      row?.title ||
+      (kind === "pages" ? "Nova anotação" : "")
+    );
+
+    if (response === null) return;
+
+    title = response.trim();
+
+    if (
+      title.length < 1 ||
+      title.length > 100
+    ) {
+      return status(
+        "Título inválido (1 a 100 caracteres).",
+        true
+      );
+    }
+  }
+
+  state.busy = true;
+
+  try {
+    let result;
+
+    if (operation === "create") {
+      const body = { title };
+
+      if (kind === "sections") {
+        body.notebook_id = state.notebookId;
       }
-      submitButton.disabled = true;
-      message.hidden = true;
-      try {
-        await auth[method](...args);
-        if (successText) showMessage(successText, 'success');
-      } catch (error) {
-        // Mensagens genéricas evitam expor informações internas do servidor.
-        showMessage('Não foi possível concluir a solicitação. Confira os dados e tente novamente.', 'error');
-        console.error('Falha na autenticação:', error);
-      } finally {
-        submitButton.disabled = false;
+
+      if (kind === "pages") {
+        body.section_id = state.sectionId;
+      }
+
+      result = await api(
+        "/api/" + kind,
+        "POST",
+        body
+      );
+
+    } else if (operation === "rename") {
+      const body = { title };
+
+      if (kind === "pages") {
+        body.updated_at = row.updated_at;
+      }
+
+      result = await api(
+        "/api/" + kind + "/" +
+        encodeURIComponent(row.id),
+        "PATCH",
+        body
+      );
+
+    } else {
+      await api(
+        "/api/" + kind + "/" +
+        encodeURIComponent(row.id),
+        "DELETE"
+      );
+    }
+
+    if (kind === "notebooks") {
+      await loadNotebooks(
+        operation === "create"
+          ? result.notebook.id
+          : state.notebookId
+      );
+    }
+
+    if (kind === "sections") {
+      await refreshSections(
+        operation === "create"
+          ? result.section.id
+          : state.sectionId
+      );
+    }
+
+    if (kind === "pages") {
+      await refreshPages(
+        operation === "create"
+          ? result.page.id
+          : state.page?.id
+      );
+    }
+
+    status(
+      operation === "delete"
+        ? "Movido para a lixeira."
+        : "Alteração salva."
+    );
+  } catch (error) {
+    status(errorText(error), true);
+  } finally {
+    state.busy = false;
+  }
+}
+
+// MENU DOS ITENS
+
+async function itemMenu(kind, row) {
+  const option = prompt(
+    `O que fazer com "${row.title}"?\n` +
+    "Digite R para renomear ou E para excluir.",
+    "R"
+  );
+
+  if (!option) return;
+
+  const letter = option.trim().toUpperCase();
+
+  if (letter === "R") {
+    await changeItem(kind, "rename", row);
+  } else if (letter === "E") {
+    await changeItem(kind, "delete", row);
+  }
+}
+
+$("newNotebook").onclick =
+  () => void changeItem("notebooks", "create");
+
+$("newSection").onclick =
+  () => void changeItem("sections", "create");
+
+$("newPage").onclick =
+  () => void changeItem("pages", "create");
+
+$("searchInput").oninput = draw;
+
+// LIXEIRA
+
+async function trash() {
+  const dialog = $("trashDialog");
+  const container = $("trashList");
+
+  container.replaceChildren();
+
+  try {
+    const { items } = await api("/api/trash");
+
+    if (!items.length) {
+      empty(
+        container,
+        "Sua lixeira está vazia."
+      );
+    }
+
+    for (const item of items) {
+      const row = document.createElement("div");
+      row.className = "trash-row";
+
+      const label = document.createElement("span");
+
+      label.textContent =
+        item.title + " · " +
+        ({
+          notebooks: "Caderno",
+          sections: "Seção",
+          pages: "Anotação"
+        }[item.kind] || item.kind);
+
+      const button = document.createElement("button");
+
+      button.type = "button";
+      button.textContent = "Restaurar";
+
+      button.onclick = async () => {
+        if (!(await save())) return;
+
+        button.disabled = true;
+
+        try {
+          await api(
+            `/api/${item.kind}/${encodeURIComponent(item.id)}/restore`,
+            "POST"
+          );
+
+          await loadNotebooks(state.notebookId);
+          await trash();
+
+          status("Item restaurado.");
+        } catch (error) {
+          status(
+            errorText(error) +
+            " Restaure primeiro o caderno/seção pai, " +
+            "se também estiver excluído.",
+            true
+          );
+        } finally {
+          button.disabled = false;
+        }
+      };
+
+      row.append(label, button);
+      container.append(row);
+    }
+  } catch (error) {
+    status(errorText(error), true);
+  }
+
+  if (!dialog.open) {
+    dialog.showModal();
+  }
+}
+
+$("openTrash").onclick = () => void trash();
+
+$("closeTrash").onclick = () =>
+  $("trashDialog").close();
+
+// EXEMPLOS DE CADERNOS, SEÇÕES E ANOTAÇÕES
+
+const examples = [
+  {
+    title: "Pessoal",
+    sections: [
+      {
+        title: "Primeiros passos",
+        pages: [
+          {
+            title: "Bem-vindo ao Minhas Anotações",
+            text:
+              "BEM-VINDO AO MINHAS ANOTAÇÕES\n\n" +
+              "1. CADERNOS: agrupe seus assuntos pessoais e profissionais.\n" +
+              "2. SEÇÕES: separe os temas de cada caderno.\n" +
+              "3. ANOTAÇÕES: clique em + para criar uma página.\n" +
+              "4. EDITOR: escreva e use Ctrl/⌘ + S para salvar.\n" +
+              "5. LIXEIRA: restaure páginas, seções e cadernos removidos.\n\n" +
+              "Experimente editar esta página e atualizar o navegador."
+          },
+          {
+            title: "Como organizar minhas anotações",
+            text:
+              "Pessoal: anotações rápidas e tarefas.\n" +
+              "Trabalho: reuniões e planejamento.\n" +
+              "Estudos: conteúdos e revisões.\n" +
+              "Projetos: ideias e acompanhamento."
+          },
+          {
+            title: "Minha primeira nota",
+            text:
+              "Esta anotação foi criada como exemplo.\n\n" +
+              "Você pode editar o texto, mudar seu título ou excluí-la."
+          },
+          {
+            title: "Ideias para o futuro",
+            text:
+              "Registre projetos e ideias para desenvolver mais tarde.\n\n" +
+              "Ideia 1:\nIdeia 2:\nIdeia 3:"
+          },
+          {
+            title: "Lista de tarefas",
+            text:
+              "☐ Criar meu primeiro caderno\n" +
+              "☐ Organizar minhas seções\n" +
+              "☐ Testar o salvamento automático\n" +
+              "☐ Revisar minhas prioridades"
+          }
+        ]
+      },
+      {
+        title: "Anotações rápidas",
+        pages: [
+          {
+            title: "Captura rápida",
+            text:
+              "Registre aqui um lembrete ou uma ideia.\n"
+          }
+        ]
+      },
+      {
+        title: "Tarefas",
+        pages: [
+          {
+            title: "Checklist semanal",
+            text:
+              "☐ Segunda-feira\n" +
+              "☐ Terça-feira\n" +
+              "☐ Quarta-feira"
+          }
+        ]
+      },
+      {
+        title: "Pessoal",
+        pages: [
+          {
+            title: "Metas pessoais",
+            text:
+              "Objetivos do mês:\n\nPróximos passos:"
+          }
+        ]
+      },
+      {
+        title: "Saúde",
+        pages: [
+          {
+            title: "Hábitos e bem-estar",
+            text:
+              "Hábitos que quero acompanhar:\n\nObservações:"
+          }
+        ]
+      },
+      {
+        title: "Viagens",
+        pages: [
+          {
+            title: "Planejamento de viagem",
+            text:
+              "Destino:\n" +
+              "Datas:\n" +
+              "Orçamento:\n" +
+              "Itens necessários:"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    title: "Trabalho",
+    sections: [
+      {
+        title: "Planejamento",
+        pages: [
+          {
+            title: "Planejamento semanal",
+            text:
+              "Objetivos:\n\nPrioridades:\n\nPendências:"
+          }
+        ]
+      },
+      {
+        title: "Reuniões",
+        pages: [
+          {
+            title: "Modelo de reunião",
+            text:
+              "Data:\n" +
+              "Participantes:\n" +
+              "Pontos discutidos:\n" +
+              "Decisões:\n" +
+              "Próximos passos:"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    title: "Estudos",
+    sections: [
+      {
+        title: "Conteúdos",
+        pages: [
+          {
+            title: "Plano de estudos",
+            text:
+              "Assunto:\n" +
+              "Objetivo:\n" +
+              "Referências:\n" +
+              "Próxima revisão:"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    title: "Projetos",
+    sections: [
+      {
+        title: "Ideias",
+        pages: [
+          {
+            title: "Modelo de projeto",
+            text:
+              "Objetivo:\n" +
+              "Requisitos:\n" +
+              "Atividades:\n" +
+              "Prazos:"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    title: "Ideias",
+    sections: [
+      {
+        title: "Rascunhos",
+        pages: [
+          {
+            title: "Uma ideia para desenvolver",
+            text:
+              "Descrição da ideia:\n\n" +
+              "Possíveis aplicações:\n\n" +
+              "Próximos passos:"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    title: "Referências",
+    sections: [
+      {
+        title: "Materiais",
+        pages: [
+          {
+            title: "Referências úteis",
+            text:
+              "Livros:\n\n" +
+              "Artigos:\n\n" +
+              "Links:\n\n" +
+              "Observações:"
+          }
+        ]
+      }
+    ]
+  }
+];
+
+// INSERIR EXEMPLOS NO CLOUDFLARE D1
+
+async function insertExampleData({ automatic = false } = {}) {
+  if (state.busy || !(await save())) {
+    return false;
+  }
+
+  if (
+    !automatic &&
+    !confirm(
+      "Criar exemplos nesta conta? " +
+      "Anotações existentes não serão substituídas."
+    )
+  ) {
+    return false;
+  }
+
+  state.busy = true;
+
+  const uid = state.uid;
+
+  try {
+    status(
+      automatic
+        ? "Preparando seus cadernos de boas-vindas..."
+        : "Inserindo exemplos no Cloudflare D1..."
+    );
+
+    const { notebooks } = await api("/api/notebooks");
+
+    let welcomeNotebookId = null;
+    let welcomeSectionId = null;
+    let welcomePageId = null;
+
+    for (const template of examples) {
+      if (state.uid !== uid || !current()) {
+        throw new Error(
+          "A conta foi alterada durante a criação dos exemplos."
+        );
+      }
+
+      let notebook = notebooks.find(n =>
+        n.title === template.title ||
+        (
+          template.title === "Pessoal" &&
+          n.title === "Pessoais"
+        )
+      );
+
+      if (!notebook) {
+        ({ notebook } = await api(
+          "/api/notebooks",
+          "POST",
+          { title: template.title }
+        ));
+
+        notebooks.push(notebook);
+      }
+
+      if (template.title === "Pessoal") {
+        welcomeNotebookId = notebook.id;
+      }
+
+      const { sections } = await api(
+        "/api/sections?notebook_id=" +
+        encodeURIComponent(notebook.id)
+      );
+
+      for (const group of template.sections) {
+        let section = sections.find(
+          s => s.title === group.title
+        );
+
+        if (!section) {
+          ({ section } = await api(
+            "/api/sections",
+            "POST",
+            {
+              title: group.title,
+              notebook_id: notebook.id
+            }
+          ));
+
+          sections.push(section);
+        }
+
+        if (
+          template.title === "Pessoal" &&
+          group.title === "Primeiros passos"
+        ) {
+          welcomeSectionId = section.id;
+        }
+
+        const { pages } = await api(
+          "/api/pages?section_id=" +
+          encodeURIComponent(section.id)
+        );
+
+        for (const sample of group.pages) {
+          if (state.uid !== uid || !current()) {
+            throw new Error(
+              "A conta foi alterada durante a criação dos exemplos."
+            );
+          }
+
+          let page = pages.find(
+            p => p.title === sample.title
+          );
+
+          if (!page) {
+            ({ page } = await api(
+              "/api/pages",
+              "POST",
+              {
+                title: sample.title,
+                section_id: section.id
+              }
+            ));
+
+            const { page: saved } = await api(
+              "/api/pages/" +
+              encodeURIComponent(page.id),
+              "PATCH",
+              {
+                title: sample.title,
+                content_json: encode(sample.text),
+                updated_at: page.updated_at
+              }
+            );
+
+            page = saved;
+            pages.push(page);
+          }
+
+          if (
+            sample.title ===
+            "Bem-vindo ao Minhas Anotações"
+          ) {
+            welcomePageId = page.id;
+          }
+        }
       }
     }
 
-    document.getElementById('login-form').addEventListener('submit', event => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      performAuth('loginWithEmail', [form.elements.email.value.trim(), form.elements.password.value], form.querySelector('[type="submit"]'));
-    });
+    await loadNotebooks(welcomeNotebookId);
 
-    document.getElementById('google-login').addEventListener('click', event => {
-      performAuth('loginWithGoogle', [], event.currentTarget);
-    });
-
-    const registerForm = document.getElementById('register-form');
-    const registerPassword = document.getElementById('register-password');
-    const confirmPassword = document.getElementById('register-confirm');
-    function validateConfirmation() {
-      confirmPassword.setCustomValidity(confirmPassword.value !== registerPassword.value ? 'As senhas não coincidem.' : '');
+    if (welcomeSectionId) {
+      await selectSection(
+        welcomeSectionId,
+        true
+      );
     }
-    registerPassword.addEventListener('input', validateConfirmation);
-    confirmPassword.addEventListener('input', validateConfirmation);
-    registerForm.addEventListener('submit', event => {
-      event.preventDefault();
-      validateConfirmation();
-      if (!registerForm.reportValidity()) return;
-      performAuth('registerWithEmail', [registerForm.elements.email.value.trim(), registerPassword.value], registerForm.querySelector('[type="submit"]'), 'Conta criada. Confira seu e-mail caso seja necessária a confirmação do cadastro.');
-    });
 
-    document.getElementById('recover-form').addEventListener('submit', event => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      performAuth('resetPassword', [form.elements.email.value.trim()], form.querySelector('[type="submit"]'), 'Se existir uma conta vinculada ao e-mail informado, você receberá as instruções de recuperação.');
-    });
+    if (welcomePageId) {
+      await selectPage(welcomePageId);
+    }
+
+    status(
+      "Exemplos criados no D1. " +
+      "Sua página de boas-vindas está pronta."
+    );
+
+    return true;
+  } catch (error) {
+    status(
+      errorText(error) +
+      " Os itens criados foram preservados. " +
+      "Você pode clicar em Inserir exemplos novamente.",
+      true
+    );
+
+    return false;
+  } finally {
+    state.busy = false;
+  }
+}
+
+// INICIALIZAÇÃO DA SESSÃO
+
+async function enter(user) {
+  const generation = ++state.generation;
+
+  state.uid = user.uid;
+
+  $("accountEmail").textContent =
+    user.email || "Conta autenticada";
+
+  show("appView");
+  status("Carregando anotações...");
+
+  try {
+    await api("/api/users/sync", "POST");
+
+    if (generation !== state.generation) {
+      return;
+    }
+
+    await loadNotebooks();
+
+    if (generation !== state.generation) {
+      return;
+    }
+
+    // Cria exemplos automaticamente para uma conta vazia.
+    const initialKey =
+      "mynotes-examples-initialized:" + user.uid;
+
+    if (!localStorage.getItem(initialKey)) {
+      if (state.notebooks.length === 0) {
+        const ok = await insertExampleData({
+          automatic: true
+        });
+
+        if (!ok) return;
+      }
+
+      localStorage.setItem(initialKey, "1");
+    }
+
+    if (generation === state.generation) {
+      status(
+        "Conectado. Dados privados carregados do D1."
+      );
+    }
+  } catch (error) {
+    if (generation === state.generation) {
+      status(errorText(error), true);
+    }
+  }
+}
+
+// MONITORAR O FIREBASE
+
+onAuthStateChanged(auth, async user => {
+  ++state.generation;
+  ++state.navigation;
+
+  clearTimeout(autosaveTimer);
+
+  state.uid = null;
+  state.showGuideEditor = false;
+  state.notebooks = [];
+  state.sections = [];
+  state.pages = [];
+  state.notebookId = null;
+  state.sectionId = null;
+  state.page = null;
+  state.dirty = false;
+  state.saving = null;
+
+  draw();
+  drawEditor();
+
+  if (!user) {
+    return show("loginView");
+  }
+
+  try {
+    await reload(user);
+  } catch {
+    // O token será verificado na API.
+  }
+
+  if (auth.currentUser?.uid !== user.uid) {
+    return;
+  }
+
+  if (!user.emailVerified) {
+    return show("verifyView");
+  }
+
+  await enter(user);
+});
+
+// SAIR DA CONTA
+
+$("logoutButton").onclick = async () => {
+  if (!(await save())) {
+    return status(
+      "Salve ou baixe o rascunho antes de sair.",
+      true
+    );
+  }
+
+  try {
+    await signOut(auth);
+  } catch (error) {
+    status(errorText(error), true);
+  }
+};
+
   </script>
 </body>
 </html>
