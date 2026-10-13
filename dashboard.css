@@ -1,0 +1,70 @@
+/* My Notes — tema da área autenticada. Sem alterações na tela de login. */
+#appView.dashboard-shell {
+  --text:#0f172a; --muted:#64748b; --accent:#1d63dc;
+  --border:rgba(255,255,255,.64);
+  --input:rgba(255,255,255,.58);
+  --selected:rgba(203,224,255,.92);
+  width:min(1720px,96vw); height:94dvh; min-height:550px;
+  margin:3dvh auto; padding:10px; gap:10px;
+  border:1px solid rgba(255,255,255,.48); border-radius:22px;
+  background:rgba(255,255,255,.11);
+  backdrop-filter:blur(12px) saturate(1.15);
+  -webkit-backdrop-filter:blur(12px) saturate(1.15);
+  box-shadow:0 24px 75px rgba(0,36,100,.22);
+}
+#appView.dashboard-shell .topbar {
+  height:64px; min-height:64px; border-radius:14px; padding:0 20px;
+  background:rgba(255,255,255,.70); border:1px solid rgba(255,255,255,.6);
+}
+#appView.dashboard-shell .brand-icon {background:#1d63dc; width:36px;height:36px;border-radius:10px}
+#appView.dashboard-shell .brand-title {font-size:18px;color:#0f172a}
+#appView.dashboard-shell .workspace {
+  grid-template-columns:minmax(180px,210px) minmax(160px,180px) minmax(205px,230px) minmax(380px,1fr);
+  gap:10px; min-height:0; overflow:auto;
+}
+#appView.dashboard-shell .panel {
+  min-width:0; min-height:0; border:1px solid rgba(255,255,255,.65);border-radius:14px;
+  background:rgba(255,255,255,.71);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);color:#0f172a;
+}
+#appView.dashboard-shell .panel-header {padding:12px 12px 10px}
+#appView.dashboard-shell .panel-header h2 {font-size:14px;font-weight:650;color:#0f172a;letter-spacing:0;text-transform:none}
+#appView.dashboard-shell .add-btn {background:rgba(255,255,255,.65);color:#334155}
+#appView.dashboard-shell .row-main {font-size:13px;color:#253450}
+#appView.dashboard-shell .row-name small {color:#64748b}
+#appView.dashboard-shell .item-menu {color:#64748b}
+#appView.dashboard-shell .list-item.active,#appView.dashboard-shell .page-item.active {background:#cbe0ff}
+#appView.dashboard-shell .panel-editor {background:rgba(255,255,255,.80);padding:15px;position:relative}
+#appView.dashboard-shell .editor-title {font-size:26px;color:#0f172a}
+#appView.dashboard-shell .real-title {font-size:26px;color:#0f172a}
+#appView.dashboard-shell .real-text {font-size:14px;color:#263449}
+#appView.dashboard-shell .welcome-card,#appView.dashboard-shell .usage-card,#appView.dashboard-shell .tip-card {background:rgba(255,255,255,.6);border-color:rgba(255,255,255,.8)}
+#appView.dashboard-shell .status-bar {border-radius:8px;min-height:24px;padding:5px 10px;background:rgba(255,255,255,.35);color:#425674}
+#appView.dashboard-shell .sidebar-footer {padding:12px}
+#appView.dashboard-shell .ghost-btn {background:transparent;border:0;color:#475569}
+#appView.dashboard-shell .global-search-box {display:flex;align-items:center;gap:8px;position:relative;width:min(420px,30vw);height:38px;padding:0 10px;border:1px solid rgba(148,163,184,.26);border-radius:10px;background:rgba(255,255,255,.5);color:#64748b}
+#appView.dashboard-shell .global-search-box svg {width:18px;height:18px;flex:none}
+#appView.dashboard-shell .global-search-box input {min-width:0;flex:1;width:100%;border:0;background:transparent;outline:0;color:#0f172a;font-size:12px}
+#appView.dashboard-shell .global-search-box kbd {white-space:nowrap;border-radius:6px;padding:3px 6px;background:#fff;font-size:11px;color:#64748b}
+#appView.dashboard-shell .topbar-right {color:#334155}
+#appView.dashboard-shell .dashboard-cloud {color:#15803d;display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}
+#appView.dashboard-shell .dashboard-cloud.unsaved {color:#b45309}
+#appView.dashboard-shell .dashboard-cloud.error {color:#b91c1c}
+#appView.dashboard-shell .profile-avatar {width:36px;height:36px;border-radius:50%;background:#cbe0ff;display:grid;place-items:center;color:#1d63dc;font-weight:700;overflow:hidden;flex:none}
+#appView.dashboard-shell .profile-avatar img {width:100%;height:100%;object-fit:cover}
+#appView.dashboard-shell .account-details {display:flex;flex-direction:column;gap:1px;max-width:155px;font-size:12px}
+#appView.dashboard-shell .account-details small {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748b;font-size:10px}
+#appView.dashboard-shell .item-icon {font-size:19px}
+#appView.dashboard-shell .section-color {display:inline-block;flex:none;width:6px;height:20px;border-radius:4px;background:#2563eb}
+#appView.dashboard-shell .section-color.color-1 {background:#4ade80}
+#appView.dashboard-shell .section-color.color-2 {background:#facc15}
+#appView.dashboard-shell .section-color.color-3 {background:#f43f5e}
+#appView.dashboard-shell .section-color.color-4 {background:#38bdf8}
+#appView.dashboard-shell .section-color.color-5 {background:#f97316}
+#appView.dashboard-shell .section-color.color-6 {background:#64748b}
+#appView.dashboard-shell .section-color.color-7 {background:#a855f7}
+@media(max-width:1150px){#appView.dashboard-shell .workspace{grid-template-columns:180px 165px 215px minmax(385px,1fr)}#appView.dashboard-shell .global-search-box{width:280px}}
+@media(max-width:720px){#appView.dashboard-shell{width:100%;margin:0;height:100dvh;border-radius:0}#appView.dashboard-shell .topbar{padding:0 10px}#appView.dashboard-shell .global-search-box{width:38px}#appView.dashboard-shell .global-search-box input,#appView.dashboard-shell .global-search-box kbd{display:none}#appView.dashboard-shell .account-details{display:none}#appView.dashboard-shell .workspace{grid-template-columns:150px 155px 215px minmax(335px,1fr)}}
+body[data-theme=dark] #appView.dashboard-shell {--text:#e7efff;--accent:#80b4ff}
+body[data-theme=dark] #appView.dashboard-shell .panel,body[data-theme=dark] #appView.dashboard-shell .topbar{background:rgba(10,27,51,.75);color:#e7efff;border-color:rgba(255,255,255,.14)}
+body[data-theme=dark] #appView.dashboard-shell .brand-title,body[data-theme=dark] #appView.dashboard-shell .panel-header h2,body[data-theme=dark] #appView.dashboard-shell .row-main,body[data-theme=dark] #appView.dashboard-shell .real-title,body[data-theme=dark] #appView.dashboard-shell .real-text{color:#e7efff}
