@@ -778,3 +778,81 @@ window.MyNotesBridge = Object.freeze({
   }
 });
 
+window.MyNotesTransferAdapter = Object.freeze({
+  snapshot() {
+    return {
+      uid: state.uid,
+      notebookId: state.notebookId,
+      sectionId: state.sectionId,
+      pageId: state.page?.id ?? null,
+      pages: state.pages.map(page => ({ ...page }))
+    };
+  },
+
+  saveCurrent() {
+    return save();
+  },
+
+  request(path, method = "GET", body) {
+    if (
+      typeof path !== "string" ||
+      !path.startsWith("/api/") ||
+      !["GET", "POST", "PATCH", "DELETE"].includes(method)
+    ) {
+      throw new Error("Requisição de transferência inválida.");
+    }
+    return api(path, method, body);
+  },
+
+  async openPage({ notebookId, sectionId, pageId }) {
+    if (!state.uid || !(await save())) return false;
+
+    if (state.notebookId !== notebookId) {
+      await selectNotebook(notebookId, true);
+    }
+    if (state.sectionId !== sectionId) {
+      await selectSection(sectionId, true);
+    }
+    // Inclui cópias recém-criadas, mesmo se o destino for a seção atual.
+    if (!state.pages.some(page => page.id === pageId)) {
+      await refreshPages(pageId);
+    }
+    if (!state.pages.some(page => page.id === pageId)) return false;
+
+    await selectPage(pageId);
+    return state.page?.id === pageId;
+  }
+});
+
+// Acrescenta Mover e Copiar ao menu de três pontos das páginas.
+// Os menus de cadernos e seções continuam funcionando como antes.
+const originalItemMenuTransfer = itemMenu;
+itemMenu = async function (kind, row) {
+  if (kind !== "pages") {
+    return originalItemMenuTransfer(kind, row);
+  }
+
+  const selected = prompt(
+    `O que deseja fazer com "${row.title}"?\n` +
+    "R = Renomear   E = Excluir\n" +
+    "M = Mover         C = Copiar",
+    "M"
+  );
+  if (selected === null) return;
+
+  const action = selected.trim().toUpperCase();
+  if (action === "R") return changeItem(kind, "rename", row);
+  if (action === "E") return changeItem(kind, "delete", row);
+  if (action === "M" || action === "C") {
+    if (!window.MyNotesTransfer?.open) {
+      return status("Módulo de transferência não carregado.", true);
+    }
+    return window.MyNotesTransfer.open({
+      pageId: row.id,
+      title: row.title,
+      mode: action === "M" ? "move" : "copy"
+    });
+  }
+};
+
+
