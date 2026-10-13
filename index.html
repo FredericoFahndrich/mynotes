@@ -1,190 +1,557 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Minhas Anotações</title>
-  <meta name="description" content="Cadernos e anotações pessoais, com login seguro e salvamento na nuvem.">
-  <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./app.js"></script>
+  <meta name="theme-color" content="#1265e8">
+  <meta name="description" content="Acesse suas anotações com privacidade, de qualquer dispositivo.">
+  <title>Entrar | Minhas Anotações</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      --white: #fff;
+      --text-muted: rgba(255, 255, 255, .79);
+      --outline: rgba(255, 255, 255, .32);
+      --radius-card: 23px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { min-width: 320px; }
+    body { margin: 0; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: wait; opacity: .72; }
+    [hidden] { display: none !important; }
+
+    .scene {
+      position: relative;
+      display: grid;
+      min-height: 100svh;
+      padding: 36px 28px;
+      place-items: center;
+      isolation: isolate;
+      overflow: hidden;
+      color: var(--white);
+      background:
+        radial-gradient(ellipse 65% 80% at 12% 3%, rgba(166, 230, 255, .88), transparent 60%),
+        radial-gradient(ellipse 56% 64% at 58% 105%, rgba(83, 178, 255, .92), transparent 66%),
+        radial-gradient(ellipse 45% 70% at 101% 36%, rgba(1, 66, 178, .73), transparent 72%),
+        linear-gradient(124deg, #60a5fa 0%, #2886f5 35%, #1d63ed 66%, #0647bf 100%);
+    }
+    .scene::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(ellipse 35% 30% at 50% 62%, rgba(178, 228, 255, .16), transparent 100%);
+    }
+    .sculptures {
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .orb { filter: drop-shadow(0 20px 22px rgba(1, 46, 155, .23)); }
+
+    .glass-stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: min(1170px, 88vw);
+      min-height: 615px;
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, .30);
+      border-radius: 29px;
+      background: linear-gradient(130deg, rgba(236, 251, 255, .13), rgba(178, 219, 255, .055) 40%, rgba(17, 70, 186, .085));
+      box-shadow: 0 30px 100px rgba(0, 50, 156, .11), inset 0 1px rgba(255, 255, 255, .22);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+    }
+    .glass-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: linear-gradient(160deg, rgba(255, 255, 255, .12), transparent 37% 73%, rgba(145, 215, 255, .08));
+    }
+
+    .auth-card {
+      position: relative;
+      width: min(100%, 392px);
+      padding: 31px 30px 25px;
+      border: 1px solid rgba(255, 255, 255, .39);
+      border-radius: var(--radius-card);
+      background: linear-gradient(150deg, rgba(239, 252, 255, .27) 0%, rgba(199, 233, 255, .14) 47%, rgba(206, 235, 255, .21) 100%);
+      box-shadow: 0 22px 55px rgba(0, 46, 139, .19), inset 0 1px 1px rgba(255, 255, 255, .26);
+      -webkit-backdrop-filter: blur(28px) saturate(1.2);
+      backdrop-filter: blur(28px) saturate(1.2);
+      text-align: center;
+    }
+    .brand-icon {
+      display: grid;
+      place-items: center;
+      width: 62px;
+      height: 62px;
+      margin: 0 auto 13px;
+      border-radius: 17px;
+      background: linear-gradient(135deg, #43a6ff 0%, #1a73f5 56%, #0454d0 100%);
+      box-shadow: 0 9px 18px rgba(4, 84, 207, .30), inset 0 1px rgba(255,255,255,.3);
+    }
+    .brand-icon svg { width: 39px; height: 42px; filter: drop-shadow(0 3px 3px rgba(0, 65, 139, .15)); }
+    .auth-header h1 { margin: 0; font-size: 21px; font-weight: 800; line-height: 1.3; letter-spacing: -.65px; }
+    .subtitle { margin: 5px 0 20px; color: rgba(255,255,255,.82); font-size: 12px; line-height: 1.55; }
+
+    .auth-view { animation: appear .22s ease both; }
+    @keyframes appear { from { opacity: .4; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .google-button, .submit-button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      min-height: 45px;
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform .17s ease, box-shadow .17s ease, background .17s ease;
+    }
+    .google-button {
+      color: #203251;
+      background: #fff;
+      box-shadow: 0 4px 14px rgba(16, 57, 141, .10);
+    }
+    .google-button svg { width: 18px; height: 18px; flex: none; }
+    .google-button:hover:not(:disabled) { background: #f5faff; transform: translateY(-1px); }
+    .submit-button {
+      margin-top: 14px;
+      color: #fff;
+      background: linear-gradient(110deg, #1261db, #004ac6);
+      box-shadow: 0 9px 17px rgba(0, 57, 161, .19);
+    }
+    .submit-button:hover:not(:disabled) { background: linear-gradient(110deg, #0055d4, #003eaa); transform: translateY(-1px); box-shadow: 0 10px 21px rgba(0, 55, 165, .25); }
+    .google-button:active, .submit-button:active { transform: translateY(0); }
+    :where(button, input, a):focus-visible { outline: 3px solid rgba(255,255,255,.95); outline-offset: 3px; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 21px 0 18px;
+      color: rgba(255,255,255,.79);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .divider::before, .divider::after { content: ""; height: 1px; flex: 1; background: rgba(255,255,255,.34); }
+    .field { margin-bottom: 13px; text-align: left; }
+    .field label { display: block; margin-bottom: 7px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.96); }
+    .input-wrap { position: relative; }
+    .input-wrap .leading-icon {
+      position: absolute;
+      top: 50%; left: 13px;
+      width: 16px; height: 16px;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: rgba(255, 255, 255, .88);
+    }
+    .field input {
+      display: block;
+      width: 100%;
+      min-height: 44px;
+      padding: 11px 42px 11px 39px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 10px;
+      outline: 0;
+      background: rgba(223, 242, 255, .20);
+      color: #fff;
+      font-size: 12px;
+      transition: border-color .17s ease, background .17s ease, box-shadow .17s ease;
+    }
+    .field input::placeholder { color: rgba(248,252,255,.67); opacity: 1; }
+    .field input:hover { background: rgba(232,247,255,.26); }
+    .field input:focus-visible { border-color: rgba(255,255,255,.77); box-shadow: 0 0 0 3px rgba(255,255,255,.16); }
+    .field input::-ms-reveal { display: none; }
+    .toggle-password {
+      position: absolute;
+      top: 50%; right: 6px;
+      display: grid;
+      place-items: center;
+      width: 33px; height: 33px;
+      padding: 0;
+      transform: translateY(-50%);
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: rgba(255,255,255,.85);
+    }
+    .toggle-password:hover { background: rgba(255,255,255,.15); }
+    .toggle-password svg { width: 17px; height: 17px; }
+    .toggle-password .eye-off { display: none; }
+    .toggle-password[aria-pressed="true"] .eye { display: none; }
+    .toggle-password[aria-pressed="true"] .eye-off { display: block; }
+    .inline-links {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 17px;
+    }
+    .inline-links .separator { width: 1px; height: 12px; background: rgba(255,255,255,.48); }
+    .text-link {
+      padding: 2px 0;
+      border: 0;
+      background: none;
+      color: rgba(255,255,255,.96);
+      font-size: 11px;
+      font-weight: 500;
+      text-underline-offset: 3px;
+      text-decoration: underline;
+      text-decoration-color: rgba(255,255,255,.45);
+    }
+    .text-link:hover { text-decoration-color: #fff; }
+    .privacy-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      margin: 24px 0 0;
+      color: rgba(255,255,255,.77);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+    .privacy-note svg { flex: none; width: 17px; height: 17px; }
+    .form-description { margin: 0 0 19px; color: var(--text-muted); font-size: 12px; line-height: 1.7; }
+    .auth-view:not([data-view="login"]) .submit-button { margin-top: 17px; }
+    .auth-view:not([data-view="login"]) .inline-links { margin-top: 18px; }
+    .message {
+      margin: 17px 0 0;
+      padding: 11px 12px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 9px;
+      background: rgba(9,50,123,.22);
+      color: #fff;
+      font-size: 11px;
+      line-height: 1.55;
+      text-align: left;
+    }
+    .message[data-kind="error"] { background: rgba(126,18,47,.32); border-color: rgba(255,220,227,.42); }
+    .message[data-kind="success"] { background: rgba(1,82,100,.32); border-color: rgba(213,255,246,.42); }
+    .short-field { margin-top: 16px; }
+
+    @media (max-width: 720px) {
+      .scene { padding: 20px 16px; }
+      .glass-stage { width: 100%; min-height: unset; padding: 25px 14px; border-radius: 25px; }
+      .auth-card { max-width: 405px; padding: 30px 25px 25px; }
+      .sculptures { width: 1150px; max-width: none; left: 50%; transform: translateX(-50%); }
+    }
+    @media (max-width: 420px) {
+      .scene { padding: 13px 10px; }
+      .glass-stage { padding: 16px 10px; border-radius: 21px; }
+      .auth-card { padding: 27px 21px 23px; border-radius: 20px; }
+      .auth-header h1 { font-size: 20px; }
+      .privacy-note { font-size: 9px; }
+    }
+    @media (max-height: 750px) and (min-width: 721px) {
+      .scene { padding-block: 20px; }
+      .glass-stage { min-height: 555px; }
+      .auth-card { padding-top: 23px; padding-bottom: 20px; }
+      .brand-icon { width: 53px; height: 53px; margin-bottom: 10px; }
+      .brand-icon svg { width: 35px; height: 37px; }
+      .subtitle { margin-bottom: 15px; }
+      .divider { margin-block: 14px 12px; }
+      .field { margin-bottom: 10px; }
+      .privacy-note { margin-top: 17px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
 </head>
-<body data-theme="light">
-  <div class="app-background" aria-hidden="true"></div>
+<body>
+  <main class="scene">
+    <!-- Esculturas vetoriais decorativas: não dependem de imagens externas. -->
+    <svg class="sculptures" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="pipe-blue" x1=".05" y1="0" x2=".95" y2="1" objectBoundingBox="true">
+          <stop offset="0" stop-color="#d5f8ff"/><stop offset=".19" stop-color="#8cd7ff"/>
+          <stop offset=".45" stop-color="#258bfb"/><stop offset=".75" stop-color="#0363db"/><stop offset="1" stop-color="#85c9ff"/>
+        </linearGradient>
+        <linearGradient id="pipe-deep" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#beeaff"/><stop offset=".25" stop-color="#318ef9"/>
+          <stop offset=".54" stop-color="#0067e9"/><stop offset=".8" stop-color="#0053be"/><stop offset="1" stop-color="#9adcff"/>
+        </linearGradient>
+        <linearGradient id="pipe-glow" x1="0" y1="0" x2=".7" y2="1">
+          <stop offset="0" stop-color="#e5ffff"/><stop offset=".28" stop-color="#9fddff"/><stop offset=".61" stop-color="#318ffc"/><stop offset="1" stop-color="#0071ed"/>
+        </linearGradient>
+        <linearGradient id="note-white" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f0fbff"/><stop offset=".55" stop-color="#cfecff"/><stop offset="1" stop-color="#94c9ff"/>
+        </linearGradient>
+        <radialGradient id="bubble"><stop offset="0" stop-color="#9bd6ff" stop-opacity=".74"/><stop offset=".58" stop-color="#4c9afb" stop-opacity=".52"/><stop offset="1" stop-color="#0053ca" stop-opacity=".12"/></radialGradient>
+        <radialGradient id="ball" cx=".3" cy=".20" r=".86">
+          <stop offset="0" stop-color="#ebffff"/><stop offset=".28" stop-color="#a9e5ff"/>
+          <stop offset=".7" stop-color="#45a6ff"/><stop offset="1" stop-color="#066be0"/>
+        </radialGradient>
+        <filter id="shadow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="1" dy="17" stdDeviation="16" flood-color="#0346a6" flood-opacity=".36"/></filter>
+        <filter id="soft"><feGaussianBlur stdDeviation="13"/></filter>
+        <filter id="dream"><feGaussianBlur stdDeviation="21"/></filter>
+      </defs>
 
-  <main id="loginView" class="auth-screen">
-    <section class="auth-card">
-      <div class="auth-symbol">▤</div>
-      <h1>Minhas Anotações</h1>
-      <p>Um espaço para organizar suas ideias com privacidade.</p>
-      <button id="googleLogin" class="auth-google" type="button">Continuar com Google</button>
-      <div class="auth-divider">ou entre com e-mail</div>
-      <form id="authForm">
-        <label for="email">E-mail</label>
-        <input id="email" type="email" autocomplete="email" required>
-        <label for="password">Senha</label>
-        <input id="password" type="password" autocomplete="current-password" minlength="6" required>
-        <button id="authSubmit" class="auth-submit" type="submit">Entrar</button>
-      </form>
-      <div class="auth-links">
-        <button id="toggleRegister" type="button">Criar uma conta</button>
-        <button id="resetPassword" type="button">Esqueci minha senha</button>
+      <circle cx="342" cy="324" r="52" fill="url(#bubble)" filter="url(#dream)"/>
+      <circle cx="1080" cy="674" r="45" fill="url(#ball)" opacity=".76" filter="url(#soft)"/>
+      <ellipse cx="586" cy="664" rx="35" ry="45" fill="#a0e5ff" opacity=".55" filter="url(#dream)"/>
+      <ellipse cx="1163" cy="112" rx="88" ry="70" fill="#93daff" opacity=".24" filter="url(#dream)"/>
+
+      <!-- Arco superior. -->
+      <path d="M 445 162 C 428 102, 506 49, 558 80" fill="none" stroke="url(#pipe-glow)" stroke-width="56" stroke-linecap="round" filter="url(#shadow)"/>
+      <path d="M 446 146 C 448 102, 508 67, 554 87" fill="none" stroke="#d8f9ff" stroke-opacity=".27" stroke-width="8" stroke-linecap="round" filter="url(#soft)"/>
+
+      <!-- Escultura tubular do lado direito. -->
+      <path d="M 1149 451 C 1068 429, 1030 363, 1059 289 C 1105 184, 1209 203, 1206 287 C 1202 356, 1159 383, 1220 412 C 1254 428, 1274 437, 1301 467"
+        fill="none" stroke="#003fae" stroke-opacity=".26" stroke-width="95" stroke-linecap="round" filter="url(#dream)"/>
+      <path d="M 1151 448 C 1067 420, 1039 351, 1068 274 C 1103 180, 1211 192, 1209 280 C 1207 337, 1153 382, 1209 407 C 1252 425, 1283 433, 1309 474"
+        fill="none" stroke="url(#pipe-deep)" stroke-width="77" stroke-linecap="round" filter="url(#shadow)"/>
+      <path d="M 1138 442 C 1066 412, 1063 347, 1090 288 C 1131 211, 1186 228, 1186 270"
+        fill="none" stroke="#c4edff" stroke-opacity=".22" stroke-width="15" stroke-linecap="round" filter="url(#soft)"/>
+      <path d="M 1212 406 C 1255 421, 1284 434, 1309 474" fill="none" stroke="url(#pipe-glow)" stroke-width="71" stroke-linecap="round" filter="url(#shadow)"/>
+
+      <!-- Tubos grandes no primeiro plano. -->
+      <path d="M -72 695 C 40 520, 161 506, 239 574 C 311 636, 276 743, 217 778" fill="none" stroke="url(#pipe-glow)" stroke-width="112" stroke-linecap="round" filter="url(#shadow)"/>
+      <path d="M -113 836 C -29 667, 103 671, 221 744 C 281 781, 346 836, 396 930" fill="none" stroke="url(#pipe-deep)" stroke-width="114" stroke-linecap="round" filter="url(#shadow)"/>
+      <path d="M -60 831 C 55 669, 167 714, 272 814" fill="none" stroke="#d8fbff" stroke-opacity=".15" stroke-width="21" stroke-linecap="round" filter="url(#soft)"/>
+      <path d="M 1472 902 C 1380 809, 1438 728, 1529 726 C 1607 724, 1645 663, 1743 659" fill="none" stroke="url(#pipe-glow)" stroke-width="158" stroke-linecap="round" filter="url(#shadow)"/>
+      <circle class="orb" cx="1588" cy="349" r="85" fill="url(#ball)" opacity=".96"/>
+
+      <!-- Duas folhas de anotações tridimensionais. -->
+      <g transform="translate(433 371) rotate(-21)" filter="url(#shadow)" opacity=".62">
+        <rect x="0" y="0" width="144" height="125" rx="22" fill="#96d5ff" stroke="#c8f2ff" stroke-width="2"/>
+        <rect x="12" y="10" width="122" height="108" rx="15" fill="#a6dcff" opacity=".28"/>
+      </g>
+      <g transform="translate(353 405) rotate(-21)" filter="url(#shadow)">
+        <rect x="0" y="0" width="150" height="140" rx="23" fill="url(#note-white)" stroke="#efffff" stroke-opacity=".86" stroke-width="2"/>
+        <path d="M 29 44 H 111 M 29 68 H 112 M 29 92 H 78" fill="none" stroke="#87c0f4" stroke-width="9" stroke-linecap="round" opacity=".85"/>
+      </g>
+    </svg>
+
+    <section class="glass-stage" aria-label="Acesso ao aplicativo">
+      <div class="auth-card">
+        <header class="auth-header">
+          <div class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 44 48" fill="none">
+              <path d="M11 4h17l10 11v25a4 4 0 0 1-4 4H11a5 5 0 0 1-5-5V9a5 5 0 0 1 5-5Z" fill="#E8F7FF"/>
+              <path d="M28 4v8a4 4 0 0 0 4 4h6" fill="#A5D6FF"/>
+              <path d="M13 24h18M13 30h18M13 36h12" stroke="#66B2F5" stroke-linecap="round" stroke-width="2.8"/>
+            </svg>
+          </div>
+          <h1>Minhas Anotações</h1>
+          <p class="subtitle">Organize suas ideias com privacidade.</p>
+        </header>
+
+        <section class="auth-view" data-view="login" aria-label="Entrar na conta">
+          <button class="google-button" type="button" id="google-login">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.87h5.38a4.62 4.62 0 0 1-2 3.03v2.51h3.23c1.89-1.75 2.99-4.32 2.99-7.36Z"/>
+              <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.61-2.41l-3.23-2.51c-.9.6-2.04.96-3.38.96-2.6 0-4.81-1.76-5.6-4.13H3.06v2.59A10 10 0 0 0 12 22Z"/>
+              <path fill="#FBBC05" d="M6.4 13.91a6 6 0 0 1 0-3.82V7.5H3.06a10 10 0 0 0 0 9l3.34-2.59Z"/>
+              <path fill="#EA4335" d="M12 5.96c1.43 0 2.71.49 3.72 1.47l2.79-2.79A9.57 9.57 0 0 0 12 2a10 10 0 0 0-8.94 5.5L6.4 10.1C7.19 7.72 9.4 5.96 12 5.96Z"/>
+            </svg>
+            Continuar com Google
+          </button>
+          <div class="divider">ou entre com e-mail</div>
+          <form id="login-form">
+            <div class="field">
+              <label for="login-email">E-mail</label>
+              <div class="input-wrap">
+                <svg class="leading-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <input id="login-email" type="email" name="email" placeholder="seuemail@gmail.com" autocomplete="email" inputmode="email" maxlength="254" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="login-password">Senha</label>
+              <div class="input-wrap">
+                <svg class="leading-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                <input id="login-password" type="password" name="password" placeholder="Digite sua senha" autocomplete="current-password" required>
+                <button class="toggle-password" type="button" aria-controls="login-password" aria-label="Mostrar senha" aria-pressed="false">
+                  <svg class="eye" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"/></svg>
+                  <svg class="eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 3 18 18M10.6 6.6A10.2 10.2 0 0 1 12 6.5c6 0 9.5 5.5 9.5 5.5 2.5 12 2.5 12S6 17.5 12 17.5c1.1 0 2.2-.2 3.1-.6M10.2 10.2a2.6 2.6 0 0 0 3.6 3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <button class="submit-button" type="submit">Entrar</button>
+          </form>
+          <nav class="inline-links" aria-label="Outras opções de acesso">
+            <button type="button" class="text-link" data-go="register">Criar conta</button>
+            <span class="separator" aria-hidden="true"></span>
+            <button type="button" class="text-link" data-go="recover">Esqueci minha senha</button>
+          </nav>
+        </section>
+
+        <section class="auth-view" data-view="register" aria-label="Criar conta" hidden>
+          <p class="form-description">Crie sua conta para guardar e sincronizar suas anotações.</p>
+          <form id="register-form">
+            <div class="field">
+              <label for="register-email">E-mail</label>
+              <div class="input-wrap">
+                <svg class="leading-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.7"/></svg>
+                <input id="register-email" type="email" name="email" placeholder="seuemail@gmail.com" autocomplete="email" inputmode="email" maxlength="254" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="register-password">Senha (mínimo de 8 caracteres)</label>
+              <div class="input-wrap">
+                <svg class="leading-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7"/></svg>
+                <input id="register-password" type="password" name="password" placeholder="Crie uma senha" autocomplete="new-password" minlength="8" required>
+                <button class="toggle-password" type="button" aria-controls="register-password" aria-label="Mostrar senha" aria-pressed="false">
+                  <svg class="eye" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"/></svg>
+                  <svg class="eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 3 18 18M10.6 6.6A10.2 10.2 0 0 1 12 6.5c6 0 9.5 5.5 9.5 5.5a16.8 16.8 0 0 1-3.2 3.4M6.5 6.9C4 8.6 2.5 12 2.5 12S6 17.5 12 17.5c1.1 0 2.2-.2 3.1-.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="register-confirm">Confirmar senha</label>
+              <div class="input-wrap">
+                <svg class="leading-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7"/></svg>
+                <input id="register-confirm" type="password" name="confirmPassword" placeholder="Repita sua senha" autocomplete="new-password" minlength="8" required>
+              </div>
+            </div>
+            <button class="submit-button" type="submit">Criar conta</button>
+          </form>
+          <div class="inline-links"><button type="button" class="text-link" data-go="login">Voltar para o login</button></div>
+        </section>
+
+        <section class="auth-view" data-view="recover" aria-label="Recuperar senha" hidden>
+          <p class="form-description">Informe seu e-mail para receber as instruções de redefinição de senha.</p>
+          <form id="recover-form">
+            <div class="field short-field">
+              <label for="recover-email">E-mail</label>
+              <div class="input-wrap">
+                <svg class="leading-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.7"/></svg>
+                <input id="recover-email" type="email" name="email" placeholder="seuemail@gmail.com" autocomplete="email" inputmode="email" maxlength="254" required>
+              </div>
+            </div>
+            <button class="submit-button" type="submit">Enviar instruções</button>
+          </form>
+          <div class="inline-links"><button type="button" class="text-link" data-go="login">Voltar para o login</button></div>
+        </section>
+
+        <p class="message" id="auth-message" role="status" aria-live="polite" hidden></p>
+        <p class="privacy-note">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 18h11a4 4 0 0 0 .6-7.95A6.5 6.5 0 0 0 6.15 9.1 4.5 4.5 0 0 0 7 18Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          Seus dados são privados e sincronizados na nuvem.
+        </p>
       </div>
-      <p id="authError" class="feedback" role="status"></p>
     </section>
   </main>
 
-  <main id="verifyView" class="auth-screen" hidden>
-    <section class="auth-card">
-      <div class="auth-symbol">✉</div>
-      <h1>Confirme seu e-mail</h1>
-      <p>Abra a mensagem de confirmação recebida e clique no link. Depois volte aqui.</p>
-      <button id="verifyAgain" type="button" class="auth-submit">Já confirmei meu e-mail</button>
-      <button id="verifyResend" type="button" class="auth-google">Reenviar confirmação</button>
-      <button id="verifyExit" type="button" class="auth-text">Voltar ao login</button>
-      <p id="verifyMessage" class="feedback" role="status"></p>
-    </section>
-  </main>
+  <script>
+    'use strict';
 
-  <div id="appView" class="app-shell" hidden>
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-icon">▤</span>
-        <strong class="brand-title">Minhas Anotações</strong>
-      </div>
-      <div class="topbar-right">
-        <span id="accountEmail" class="user-email"></span>
-        <button id="themeToggle" class="icon-btn" title="Alternar claro/escuro" aria-label="Alternar tema" type="button">☾</button>
-        <button id="logoutButton" class="logout-btn" type="button">Sair</button>
-      </div>
-    </header>
+    // Integração: disponibilize window.MinhasAnotacoesAuth no script de
+    // autenticação do seu projeto antes de executar uma ação de login.
+    // Métodos esperados (todos assíncronos):
+    // loginWithEmail(email, password)
+    // loginWithGoogle()
+    // registerWithEmail(email, password)
+    // resetPassword(email)
+    // Cada método deve estabelecer a sessão ou lançar Error quando falhar.
+    const views = [...document.querySelectorAll('.auth-view')];
+    const message = document.getElementById('auth-message');
+    const subtitle = document.querySelector('.subtitle');
+    const subtitles = {
+      login: 'Organize suas ideias com privacidade.',
+      register: 'Comece a organizar suas ideias.',
+      recover: 'Recupere o acesso às suas anotações.'
+    };
 
-    <main class="workspace">
-      <aside class="panel panel-sidebar" aria-label="Cadernos">
-        <div class="panel-header">
-          <h2>Cadernos</h2>
-          <button id="newNotebook" class="add-btn" type="button" aria-label="Criar caderno">+</button>
-        </div>
-        <nav id="notebooksList" class="list"></nav>
-        <div class="sidebar-footer">
-          <button id="openTrash" class="ghost-btn" type="button">♲ Lixeira</button>
-        </div>
-      </aside>
+    function showMessage(text, kind = 'info') {
+      message.textContent = text;
+      message.dataset.kind = kind;
+      message.hidden = false;
+    }
 
-      <aside class="panel panel-sections" aria-label="Seções">
-        <div class="panel-header">
-          <h2>Seções</h2>
-          <button id="newSection" class="add-btn" type="button" aria-label="Criar seção">+</button>
-        </div>
-        <nav id="sectionsList" class="list"></nav>
-      </aside>
+    function navigate(viewName) {
+      views.forEach(view => { view.hidden = view.dataset.view !== viewName; });
+      subtitle.textContent = subtitles[viewName];
+      message.hidden = true;
+      const firstInput = document.querySelector(`.auth-view[data-view="${viewName}"] input`);
+      firstInput?.focus({ preventScroll: true });
+    }
 
-      <section class="panel panel-pages" aria-label="Anotações">
-        <div class="panel-header">
-          <h2>Anotações</h2>
-          <button id="newPage" class="add-btn" type="button" aria-label="Criar anotação">+</button>
-        </div>
-        <div class="search-box">
-          <input id="searchInput" type="search" placeholder="Buscar nesta seção..." aria-label="Buscar anotações">
-        </div>
-        <nav id="pagesList" class="pages-list"></nav>
-      </section>
+    document.querySelectorAll('[data-go]').forEach(button => {
+      button.addEventListener('click', () => navigate(button.dataset.go));
+    });
 
-      <section class="panel panel-editor" aria-label="Editor">
-        <div class="editor-topline">
-          <span id="breadcrumb" class="breadcrumb">Meu espaço pessoal</span>
-          <div class="editor-tools">
-            <button id="downloadButton" class="tool-btn" type="button" title="Baixar anotação" aria-label="Baixar anotação">↓</button>
-            <button id="saveButton" class="tool-btn" type="button" title="Salvar anotação">✓</button>
-          </div>
-        </div>
+    document.querySelectorAll('.toggle-password').forEach(button => {
+      button.addEventListener('click', () => {
+        const field = document.getElementById(button.getAttribute('aria-controls'));
+        const showing = field.type === 'password';
+        field.type = showing ? 'text' : 'password';
+        button.setAttribute('aria-pressed', String(showing));
+        button.setAttribute('aria-label', showing ? 'Ocultar senha' : 'Mostrar senha');
+        field.focus({ preventScroll: true });
+      });
+    });
 
-        <div id="welcomeView">
-          <div class="welcome-heading">
-            <h1 class="editor-title">Bem-vindo ao Minhas Anotações</h1>
-            <button id="editWelcomeButton" class="intro-edit" type="button" hidden>✎ Editar esta anotação</button>
-          </div>
+    async function performAuth(method, args, submitButton, successText) {
+      const auth = window.MinhasAnotacoesAuth;
+      if (!auth || typeof auth[method] !== 'function') {
+        showMessage('Interface pronta. A autenticação precisa ser conectada ao serviço do aplicativo.');
+        return;
+      }
+      submitButton.disabled = true;
+      message.hidden = true;
+      try {
+        await auth[method](...args);
+        if (successText) showMessage(successText, 'success');
+      } catch (error) {
+        // Mensagens genéricas evitam expor informações internas do servidor.
+        showMessage('Não foi possível concluir a solicitação. Confira os dados e tente novamente.', 'error');
+        console.error('Falha na autenticação:', error);
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
 
-          <div class="welcome-card">
-            <div class="welcome-text">
-              <h3>👋 Bem-vindo ao Minhas Anotações!</h3>
-              <p>Este é o seu espaço pessoal para registrar ideias, organizar informações e acompanhar atividades de forma simples e privada.</p>
-              <p>Os seus dados são associados à sua conta e protegidos pelo login Firebase.</p>
-            </div>
-            <div class="welcome-illustration" aria-hidden="true">📝</div>
-          </div>
+    document.getElementById('login-form').addEventListener('submit', event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      performAuth('loginWithEmail', [form.elements.email.value.trim(), form.elements.password.value], form.querySelector('[type="submit"]'));
+    });
 
-          <div class="usage-section">
-            <h2>Como utilizar</h2>
-            <div class="usage-grid">
-              <div class="usage-card">
-                <span class="usage-number blue">1</span>
-                <h4>Cadernos</h4>
-                <p>Separe os assuntos: Pessoal, Trabalho, Estudos e Projetos.</p>
-              </div>
-              <div class="usage-card">
-                <span class="usage-number green">2</span>
-                <h4>Seções</h4>
-                <p>Crie temas dentro de cada caderno.</p>
-              </div>
-              <div class="usage-card">
-                <span class="usage-number orange">3</span>
-                <h4>Anotações</h4>
-                <p>Selecione uma seção e clique em + para criar sua página.</p>
-              </div>
-              <div class="usage-card">
-                <span class="usage-number purple">4</span>
-                <h4>Editor</h4>
-                <p>Escreva e salve com Ctrl/⌘ + S ou aguarde o salvamento automático.</p>
-              </div>
-              <div class="usage-card">
-                <span class="usage-number pink">5</span>
-                <h4>Organização</h4>
-                <p>Use ⋮ ao lado de um item para renomear ou mover à lixeira.</p>
-              </div>
-              <div class="usage-card">
-                <span class="usage-number gold">6</span>
-                <h4>Lixeira</h4>
-                <p>Restaure cadernos, seções e anotações removidos.</p>
-              </div>
-            </div>
-          </div>
+    document.getElementById('google-login').addEventListener('click', event => {
+      performAuth('loginWithGoogle', [], event.currentTarget);
+    });
 
-          <div class="tip-card">
-            <span class="tip-icon">💡</span>
-            <span>
-              <strong>Dica</strong>
-              Experimente editar esta página ou criar uma anotação.
-              Depois de salvar, atualize o navegador para verificar
-              que os dados foram armazenados no D1.
-            </span>
-          </div>
-        </div>
+    const registerForm = document.getElementById('register-form');
+    const registerPassword = document.getElementById('register-password');
+    const confirmPassword = document.getElementById('register-confirm');
+    function validateConfirmation() {
+      confirmPassword.setCustomValidity(confirmPassword.value !== registerPassword.value ? 'As senhas não coincidem.' : '');
+    }
+    registerPassword.addEventListener('input', validateConfirmation);
+    confirmPassword.addEventListener('input', validateConfirmation);
+    registerForm.addEventListener('submit', event => {
+      event.preventDefault();
+      validateConfirmation();
+      if (!registerForm.reportValidity()) return;
+      performAuth('registerWithEmail', [registerForm.elements.email.value.trim(), registerPassword.value], registerForm.querySelector('[type="submit"]'), 'Conta criada. Confira seu e-mail caso seja necessária a confirmação do cadastro.');
+    });
 
-        <div id="editorView" class="real-editor" hidden>
-          <input id="pageTitle" class="real-title" type="text" maxlength="100" aria-label="Título da anotação" placeholder="Título da anotação">
-          <div class="editor-meta">
-            <span id="updatedAt"></span>
-            <span id="saveState" class="save-status">✓ Salvo</span>
-          </div>
-          <textarea id="pageText" class="real-text" aria-label="Conteúdo da anotação" placeholder="Comece a escrever..."></textarea>
-          <div class="real-footer">
-            <span>Texto simples</span>
-            <span>Ctrl/⌘ + S para salvar</span>
-          </div>
-        </div>
-      </section>
-    </main>
-    <div id="statusBar" class="status-bar" role="status"></div>
-  </div>
-
-  <dialog id="trashDialog" class="trash-dialog">
-    <div class="trash-heading">
-      <h2>Lixeira</h2>
-      <button id="closeTrash" type="button">Fechar</button>
-    </div>
-    <p>Se o item estiver dentro de um caderno ou seção excluído, restaure primeiro o item pai.</p>
-    <div id="trashList"></div>
-  </dialog>
+    document.getElementById('recover-form').addEventListener('submit', event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      performAuth('resetPassword', [form.elements.email.value.trim()], form.querySelector('[type="submit"]'), 'Se existir uma conta vinculada ao e-mail informado, você receberá as instruções de recuperação.');
+    });
+  </script>
 </body>
 </html>
