@@ -1334,7 +1334,11 @@ async function insertExampleData({ automatic = false } = {}) {
   }
 
   state.busy = true;
-  $("insertExamples").disabled = true;
+
+  
+// A configuração inicial é executada automaticamente.
+// Não existe mais botão de inserção de exemplos.
+  //$("insertExamples").disabled = true;
 
   const uid = state.uid;
 
