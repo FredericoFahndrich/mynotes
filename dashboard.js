@@ -1,3 +1,6 @@
+import { getApps } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+
 /* Complemento visual: não altera Firebase nem chama endpoints privados. */
 const app = document.getElementById('appView');
 const login = document.getElementById('loginView');
@@ -34,14 +37,65 @@ if(app && login && background) {
     if(bar){const sync=()=>{const t=bar.textContent||'';cloud.textContent=/erro|falha|não foi possível/i.test(t)?'● Erro ao salvar':/não salvo|salvando/i.test(t)?'● Salvando...':/conectado|salva|carregado|criados/i.test(t)?'● Sincronizado':'● Conectando...';cloud.classList.toggle('error',/erro|falha|não foi possível/i.test(t));};new MutationObserver(sync).observe(bar,{childList:true,characterData:true,subtree:true});sync();}
     const email=document.getElementById('accountEmail');
     if(email){
-      // O app.js original atualiza #accountEmail; mantemos esse elemento no DOM.
+      // Identidade obtida do Firebase Auth (não deduzida do e-mail).
       email.style.display='none';
-      const details=document.createElement('span');details.className='account-details';
-      const name=document.createElement('strong');const small=document.createElement('small');
-      details.append(name,small);right.insertBefore(details,email);
-      const avatar=document.createElement('span');avatar.className='profile-avatar';avatar.textContent='U';right.insertBefore(avatar,details);
-      const update=()=>{const address=email.textContent||'';small.textContent=address;name.textContent=address.split('@')[0]||'Minha conta';avatar.textContent=(name.textContent[0]||'U').toUpperCase();};
-      new MutationObserver(update).observe(email,{childList:true,characterData:true,subtree:true});update();
+      const details=document.createElement('span');
+      details.className='account-details';
+      const name=document.createElement('strong');
+      const small=document.createElement('small');
+      details.append(name,small);
+      right.insertBefore(details,email);
+
+      const avatar=document.createElement('span');
+      avatar.className='profile-avatar';
+      const avatarImage=document.createElement('img');
+      avatarImage.alt='Foto do perfil';
+      avatarImage.referrerPolicy='no-referrer';
+      avatarImage.hidden=true;
+      const initials=document.createElement('span');
+      initials.textContent='U';
+      avatar.append(avatarImage,initials);
+      right.insertBefore(avatar,details);
+
+      function showProfile(user){
+        const google=user?.providerData?.find(p=>p.providerId==='google.com');
+        const address=(user?.email || google?.email || '').trim();
+        const googleName=(user?.displayName || google?.displayName || '').trim();
+        const fallback=address.split('@')[0]?.replace(/[._-]+/g,' ').trim() || 'Minha conta';
+        const displayName=googleName || fallback;
+        name.textContent=displayName;
+        small.textContent=address;
+        initials.textContent=displayName.split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase() || 'U';
+        initials.hidden=false;
+        avatarImage.hidden=true;
+
+        const photo=user?.photoURL || google?.photoURL || '';
+        let safePhoto='';
+        try {
+          const parsed=new URL(photo);
+          if(parsed.protocol==='https:') safePhoto=parsed.href;
+        }catch{/* Sem foto válida; permanecem as iniciais. */}
+        if(safePhoto){
+          avatarImage.onload=()=>{
+            avatarImage.hidden=false;
+            initials.hidden=true;
+          };
+          avatarImage.onerror=()=>{
+            avatarImage.hidden=true;
+            initials.hidden=false;
+          };
+          avatarImage.src=safePhoto;
+        }else{
+          avatarImage.removeAttribute('src');
+        }
+      }
+
+      const firebaseApp=getApps().find(item=>item.options.projectId==='mynotes-auth-af57d');
+      if(firebaseApp){
+        onAuthStateChanged(getAuth(firebaseApp),showProfile);
+      }else{
+        console.warn('Firebase não inicializado ao carregar o dashboard.');
+      }
     }
   }
   const sections=document.getElementById('sectionsList');
