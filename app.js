@@ -96,9 +96,26 @@ $("googleLogin").onclick = async () => {
 $("toggleRegister").onclick = () => {
   registerMode = !registerMode;
   $("authSubmit").textContent = registerMode ? "Criar conta" : "Entrar";
-  $("toggleRegister").textContent = registerMode ? "Já tenho conta" : "Criar uma conta";
+  $("toggleRegister").textContent = registerMode ? "Já tenho conta" : "Criar conta";
+  $("loginSubtitle").textContent = registerMode
+    ? "Crie sua conta para organizar suas ideias."
+    : "Organize suas ideias com privacidade.";
   $("password").autocomplete = registerMode ? "new-password" : "current-password";
+  $("password").value = "";
+  $("password").type = "password";
+  $("togglePasswordVisibility").setAttribute("aria-pressed", "false");
+  $("togglePasswordVisibility").setAttribute("aria-label", "Mostrar senha");
   authMessage("");
+};
+
+// A exibição da senha é apenas visual; a autenticação Firebase não é alterada.
+$("togglePasswordVisibility").onclick = () => {
+  const field = $("password");
+  const showPassword = field.type === "password";
+  field.type = showPassword ? "text" : "password";
+  $("togglePasswordVisibility").setAttribute("aria-pressed", String(showPassword));
+  $("togglePasswordVisibility").setAttribute("aria-label", showPassword ? "Ocultar senha" : "Mostrar senha");
+  field.focus({ preventScroll: true });
 };
 $("resetPassword").onclick = async () => {
   const email = $("email").value.trim();
