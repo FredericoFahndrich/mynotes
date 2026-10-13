@@ -976,3 +976,48 @@ body:not([data-theme="dark"]) .tip-card {
 .item-icon {
   font-size: 19px;
 }
+
+
+/* Ícones de cadernos e seções */
+
+.item-icon {
+  display: inline-grid;
+  place-items: center;
+
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+
+  font-size: 21px;
+  line-height: 1;
+
+  color: var(--accent);
+}
+
+.list-item .row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.list-item .row-name {
+  font-weight: 550;
+  letter-spacing: -0.1px;
+}
+
+.list-item.active .row-name {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+/* Rodapé sem o botão de exemplos */
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px 12px 18px;
+}
+
+.sidebar-footer .ghost-btn {
+  width: 100%;
+}
+
